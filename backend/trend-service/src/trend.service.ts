@@ -3,9 +3,12 @@ import { PrismaService } from "../../shared/prisma.service";
 import { publishEvent } from "../../shared/kafka";
 import { KafkaTopics } from "../../../contracts/kafka-events";
 import { CreateTrendRequest } from "../../../contracts/api-contracts";
+import { Prisma } from "@prisma/client"; // ✅ Import Prisma types
+
 @Injectable()
 export class TrendService {
   constructor(private readonly prisma: PrismaService) {}
+
   async createTrend(input: CreateTrendRequest) {
     const trend = await this.prisma.trend.create({
       data: {
@@ -16,9 +19,13 @@ export class TrendService {
         source: input.source,
         region: input.region,
         country: input.country,
-        metadata: input.metadata,
+        // ✅ Correct handling of metadata
+        metadata: input.metadata
+          ? (input.metadata as Prisma.InputJsonValue)
+          : Prisma.DbNull,
       },
     });
+
     await publishEvent(
       KafkaTopics.TREND_DISCOVERED,
       {
@@ -32,8 +39,10 @@ export class TrendService {
       },
       trend.id,
     );
+
     return trend;
   }
+
   async listTrends(params: {
     category?: string;
     region?: string;
@@ -50,6 +59,7 @@ export class TrendService {
       take: params.take || 50,
     });
   }
+
   async getTrend(id: string) {
     return this.prisma.trend.findUnique({
       where: { id },
@@ -58,6 +68,7 @@ export class TrendService {
       },
     });
   }
+
   async discoverSeedTrends() {
     const seedTrends: CreateTrendRequest[] = [
       {
@@ -113,6 +124,7 @@ export class TrendService {
         },
       },
     ];
+
     const created = [];
     for (const trend of seedTrends) {
       created.push(await this.createTrend(trend));
