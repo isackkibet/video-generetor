@@ -21,6 +21,14 @@ export class RenderService {
       throw new NotFoundException(`Script not found: ${input.scriptId}`);
     }
 
+    // ✅ Skip if a video already exists for this script
+    const existingVideo = await this.prisma.video.findFirst({
+      where: { scriptId: script.id },
+    });
+    if (existingVideo) {
+      return existingVideo;
+    }
+
     let avatarId = input.avatarId;
     if (!avatarId) {
       const avatar = await this.prisma.avatar.findFirst({
@@ -72,7 +80,13 @@ export class RenderService {
 
     const created = [];
     for (const script of scripts) {
-      created.push(await this.createVideoJob({ scriptId: script.id }));
+      // ✅ Skip duplicate jobs
+      const existingVideo = await this.prisma.video.findFirst({
+        where: { scriptId: script.id },
+      });
+      if (!existingVideo) {
+        created.push(await this.createVideoJob({ scriptId: script.id }));
+      }
     }
     return created;
   }
@@ -84,6 +98,11 @@ export class RenderService {
     });
     if (!video) {
       throw new NotFoundException(`Video not found: ${input.videoId}`);
+    }
+
+    // ✅ Skip if already rendered
+    if (video.status !== "SCRIPTED") {
+      return video;
     }
 
     await this.prisma.video.update({
