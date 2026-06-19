@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma.service";
+import { Prisma } from "@prisma/client"; // ✅ add this import
 import {
   calculateRankScore,
   freshnessScoreFromDate,
@@ -10,6 +11,7 @@ import {
   CreateFeedEventRequest,
   SeedFeedRequest,
 } from "../../../contracts/api-contracts";
+
 type RankedVideo = {
   id: string;
   title: string;
@@ -30,68 +32,62 @@ type RankedVideo = {
     qualityScore: number;
   };
 };
+
 @Injectable()
 export class RecommendationService {
   constructor(private readonly prisma: PrismaService) {}
+
   async getSeedFeed(input: SeedFeedRequest): Promise<RankedVideo[]> {
     const take = input.take && input.take > 0 ? Math.min(input.take, 100) : 30;
+
     const videos = await this.prisma.video.findMany({
       where: {
         status: "PUBLISHED",
-        videoUrl: {
-          not: null,
-        },
+        videoUrl: { not: null },
         language: input.language || undefined,
         OR: [
-          {
-            region: input.region || undefined,
-          },
-          {
-            country: input.country || undefined,
-          },
-          {
-            region: null,
-          },
+          { region: input.region || undefined },
+          { country: input.country || undefined },
+          { region: null },
         ],
       },
       include: {
         score: true,
         creator: true,
         feedEvents: {
-          where: {
-            userId: input.userId,
-          },
+          where: { userId: input.userId },
           take: 20,
-          orderBy: {
-            createdAt: "desc",
-          },
+          orderBy: { createdAt: "desc" },
         },
       },
-      orderBy: {
-        publishedAt: "desc",
-      },
+      orderBy: { publishedAt: "desc" },
       take: take * 3,
     });
+
     const ranked = videos
       .map((video) => {
         const interestScore = this.estimateInterestScore({
           videoCategory: video.category,
           userEvents: video.feedEvents.map((event) => event.action),
         });
+
         const localityScore = this.calculateLocalityScore({
           videoRegion: video.region,
           videoCountry: video.country,
           userRegion: input.region,
           userCountry: input.country,
         });
+
         const freshnessScore = freshnessScoreFromDate(video.publishedAt);
+
         const engagementScore =
           video.score?.engagementScore ??
           this.estimateEngagementFromEvents(video.feedEvents.length);
+
         const qualityScore =
-          (video.score?.qualityScore ?? video.creator?.trustScore)
-            ? (video.creator?.trustScore || 80) / 100
-            : 0.75;
+          video.score?.qualityScore ??
+          (video.creator?.trustScore ? video.creator.trustScore / 100 : 0.75);
+
         const rankScore = calculateRankScore({
           engagementScore,
           interestScore,
@@ -99,6 +95,7 @@ export class RecommendationService {
           freshnessScore,
           qualityScore,
         });
+
         return {
           id: video.id,
           title: video.title,
@@ -122,8 +119,10 @@ export class RecommendationService {
       })
       .sort((a, b) => b.rankScore - a.rankScore)
       .slice(0, take);
+
     return ranked;
   }
+
   async createFeedEvent(input: CreateFeedEventRequest) {
     const video = await this.prisma.video.findUnique({
       where: { id: input.videoId },
@@ -131,6 +130,7 @@ export class RecommendationService {
     if (!video) {
       throw new NotFoundException(`Video not found: ${input.videoId}`);
     }
+
     const event = await this.prisma.feedEvent.create({
       data: {
         userId: input.userId,
@@ -138,9 +138,10 @@ export class RecommendationService {
         action: input.action,
         watchMs: input.watchMs,
         region: input.region,
-        metadata: input.metadata,
+        metadata: input.metadata as Prisma.InputJsonValue, // ✅ cast here
       },
     });
+
     await publishEvent(
       KafkaTopics.FEED_EVENT_CREATED,
       {
@@ -152,8 +153,10 @@ export class RecommendationService {
       },
       `${event.userId}:${event.videoId}`,
     );
+
     return event;
   }
+
   async getVideoById(id: string) {
     const video = await this.prisma.video.findUnique({
       where: { id },
@@ -170,6 +173,7 @@ export class RecommendationService {
     }
     return video;
   }
+
   private estimateInterestScore(input: {
     videoCategory: string;
     userEvents: string[];
@@ -190,6 +194,7 @@ export class RecommendationService {
     }
     return this.clamp(score);
   }
+
   private calculateLocalityScore(input: {
     videoRegion: string | null;
     videoCountry: string | null;
@@ -207,12 +212,14 @@ export class RecommendationService {
     }
     return 0.5;
   }
+
   private estimateEngagementFromEvents(eventCount: number): number {
     if (eventCount >= 20) return 0.9;
     if (eventCount >= 10) return 0.82;
     if (eventCount >= 5) return 0.76;
     return 0.7;
   }
+
   private clamp(value: number): number {
     return Math.max(0, Math.min(1, value));
   }
