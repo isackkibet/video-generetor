@@ -4,10 +4,13 @@ import { publishEvent } from "../../shared/kafka";
 import { KafkaTopics } from "../../../contracts/kafka-events";
 import { GenerateScriptRequest } from "../../../contracts/api-contracts";
 import { ContentGenerationWorkflow } from "../../../ai/workflows/content-generation.workflow";
+import { Prisma } from "@prisma/client"; // ✅ Import Prisma types
+
 @Injectable()
 export class ScriptService {
   private readonly workflow = new ContentGenerationWorkflow();
   constructor(private readonly prisma: PrismaService) {}
+
   async generateFromTrend(input: GenerateScriptRequest) {
     const trend = await this.prisma.trend.findUnique({
       where: { id: input.trendId },
@@ -15,6 +18,7 @@ export class ScriptService {
     if (!trend) {
       throw new NotFoundException(`Trend not found: ${input.trendId}`);
     }
+
     const result = await this.workflow.run({
       topic: trend.topic,
       category: trend.category,
@@ -22,6 +26,7 @@ export class ScriptService {
       country: trend.country,
       language: "en",
     });
+
     const script = await this.prisma.script.create({
       data: {
         trendId: trend.id,
@@ -33,15 +38,19 @@ export class ScriptService {
         durationHint: result.script.durationHint,
         qualityScore: result.script.qualityScore,
         factScore: result.factCheck.factScore,
-        metadata: {
-          strategy: result.strategy,
-          factCheck: result.factCheck,
-          viralScore: result.viralScore,
-          avatarDirection: result.avatarDirection,
-          publishEligible: result.publishEligible,
-        },
+        // ✅ Fix metadata typing (same as Batch 5)
+        metadata: result
+          ? ({
+              strategy: result.strategy,
+              factCheck: result.factCheck,
+              viralScore: result.viralScore,
+              avatarDirection: result.avatarDirection,
+              publishEligible: result.publishEligible,
+            } as Prisma.InputJsonValue)
+          : Prisma.DbNull,
       },
     });
+
     await publishEvent(
       KafkaTopics.SCRIPT_CREATED,
       {
@@ -53,11 +62,13 @@ export class ScriptService {
       },
       script.id,
     );
+
     return {
       script,
       workflow: result,
     };
   }
+
   async generateForAllPendingTrends(take = 20) {
     const trends = await this.prisma.trend.findMany({
       where: {
@@ -68,6 +79,7 @@ export class ScriptService {
       orderBy: [{ score: "desc" }, { createdAt: "desc" }],
       take,
     });
+
     const generated = [];
     for (const trend of trends) {
       generated.push(
@@ -78,6 +90,7 @@ export class ScriptService {
     }
     return generated;
   }
+
   async listScripts(params: {
     trendId?: string;
     language?: string;
@@ -98,6 +111,7 @@ export class ScriptService {
       take: params.take || 50,
     });
   }
+
   async getScript(id: string) {
     const script = await this.prisma.script.findUnique({
       where: { id },
