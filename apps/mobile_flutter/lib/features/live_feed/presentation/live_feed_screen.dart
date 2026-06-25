@@ -4,18 +4,27 @@ import '../data/video_model.dart';
 import 'video_card.dart';
 
 class LiveFeedScreen extends StatefulWidget {
-  const LiveFeedScreen({super.key});
+  final String apiBaseUrl; // ✅ add this
+
+  const LiveFeedScreen({
+    super.key,
+    required this.apiBaseUrl, // ✅ require apiBaseUrl
+  });
+
   @override
   State<LiveFeedScreen> createState() => _LiveFeedScreenState();
 }
 
 class _LiveFeedScreenState extends State<LiveFeedScreen> {
-  final FeedRepository repository = FeedRepository();
+  late final FeedRepository repository;
   late Future<List<VideoModel>> feedFuture;
   static const String demoUserId = 'demo-user';
+
   @override
   void initState() {
     super.initState();
+    // ✅ initialize repository with apiBaseUrl
+    repository = FeedRepository(baseUrl: widget.apiBaseUrl);
     feedFuture = repository.getSeedFeed(userId: demoUserId);
   }
 
@@ -73,33 +82,22 @@ class _LiveFeedScreenState extends State<LiveFeedScreen> {
   }
 }
 
+// ✅ Re‑add ErrorView and EmptyView so they compile
 class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
   const _ErrorView({required this.message, required this.onRetry});
+
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'YohPal Live feed failed to load.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white60),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('YohPal Live feed failed to load.'),
+          Text(message),
+          ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
+        ],
       ),
     );
   }
@@ -108,25 +106,16 @@ class _ErrorView extends StatelessWidget {
 class _EmptyView extends StatelessWidget {
   final VoidCallback onRetry;
   const _EmptyView({required this.onRetry});
+
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('No seed videos yet.', style: TextStyle(fontSize: 22)),
-            const SizedBox(height: 12),
-            const Text(
-              'Run the YohPal Live AI seed pipeline first.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white60),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(onPressed: onRetry, child: const Text('Refresh')),
-          ],
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('No seed videos yet.'),
+          ElevatedButton(onPressed: onRetry, child: const Text('Refresh')),
+        ],
       ),
     );
   }

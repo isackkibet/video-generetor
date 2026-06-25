@@ -4,8 +4,11 @@ import 'video_model.dart';
 
 class FeedRepository {
   final ApiClient client;
-  FeedRepository({ApiClient? client})
-    : client = client ?? ApiClient(Env.apiBaseUrl);
+
+  // ✅ Add baseUrl parameter so LiveFeedScreen can inject it
+  FeedRepository({String? baseUrl, ApiClient? client})
+      : client = client ?? ApiClient(baseUrl ?? Env.apiBaseUrl);
+
   Future<List<VideoModel>> getSeedFeed({
     required String userId,
     String region = 'Nairobi',
