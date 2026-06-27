@@ -1,10 +1,13 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { ModerationAction } from "@prisma/client";
 import { PrismaService } from "../../shared/prisma.service";
 import { publishEvent } from "../../shared/kafka";
 import { env } from "../../shared/env";
 import { KafkaTopics } from "../../../contracts/kafka-events";
 import { ModerateVideoRequest } from "../../../contracts/api-contracts";
+
+// Define ModerationAction type locally instead of importing from Prisma
+type ModerationAction = "ALLOW" | "LIMIT" | "REVIEW" | "BLOCK";
+
 type ModerationResult = {
   action: ModerationAction;
   score: number;
@@ -20,9 +23,11 @@ type ModerationResult = {
     blockedTerms: string[];
   };
 };
+
 @Injectable()
 export class ModerationService {
   constructor(private readonly prisma: PrismaService) {}
+
   async moderateVideo(input: ModerateVideoRequest) {
     const video = await this.prisma.video.findUnique({
       where: { id: input.videoId },
@@ -33,10 +38,13 @@ export class ModerationService {
         moderationLogs: true,
       },
     });
+
     if (!video) {
       throw new NotFoundException(`Video not found: ${input.videoId}`);
     }
+
     const result = this.evaluateVideo(video);
+
     const log = await this.prisma.moderationLog.create({
       data: {
         videoId: video.id,
@@ -46,6 +54,7 @@ export class ModerationService {
         metadata: result.metadata,
       },
     });
+
     const nextStatus =
       result.action === "ALLOW"
         ? "APPROVED"
@@ -54,12 +63,14 @@ export class ModerationService {
           : result.action === "REVIEW"
             ? "MODERATION"
             : "REJECTED";
+
     const updatedVideo = await this.prisma.video.update({
       where: { id: video.id },
       data: {
         status: nextStatus,
       },
     });
+
     await publishEvent(
       KafkaTopics.VIDEO_MODERATED,
       {
@@ -70,13 +81,15 @@ export class ModerationService {
       },
       video.id,
     );
+
     return {
       video: updatedVideo,
       moderationLog: log,
       result,
     };
   }
-  async moderatePendingVideos(take = 20) {
+
+  async moderatePendingVideos(take: number = 20) {
     const videos = await this.prisma.video.findMany({
       where: {
         status: "MODERATION",
@@ -89,6 +102,7 @@ export class ModerationService {
       },
       take,
     });
+
     const moderated = [];
     for (const video of videos) {
       moderated.push(
@@ -99,6 +113,7 @@ export class ModerationService {
     }
     return moderated;
   }
+
   async listModerationQueue(params: {
     action?: ModerationAction;
     take?: number;
@@ -122,6 +137,7 @@ export class ModerationService {
       take: params.take || 50,
     });
   }
+
   async getModerationHistory(videoId: string) {
     return this.prisma.moderationLog.findMany({
       where: {
@@ -132,6 +148,7 @@ export class ModerationService {
       },
     });
   }
+
   async publishApprovedVideo(videoId: string) {
     const video = await this.prisma.video.findUnique({
       where: { id: videoId },
@@ -144,18 +161,22 @@ export class ModerationService {
         },
       },
     });
+
     if (!video) {
       throw new NotFoundException(`Video not found: ${videoId}`);
     }
+
     if (video.status !== "APPROVED") {
       throw new Error(
         `Video must be APPROVED before publishing. Current status: ${video.status}`,
       );
     }
+
     const latestLog = video.moderationLogs[0];
     if (!latestLog || !["ALLOW", "LIMIT"].includes(latestLog.action)) {
       throw new Error("Video cannot be published without passing moderation");
     }
+
     const published = await this.prisma.video.update({
       where: { id: video.id },
       data: {
@@ -163,6 +184,7 @@ export class ModerationService {
         publishedAt: new Date(),
       },
     });
+
     await publishEvent(
       KafkaTopics.VIDEO_PUBLISHED,
       {
@@ -175,9 +197,11 @@ export class ModerationService {
       },
       published.id,
     );
+
     return published;
   }
-  async publishAllApproved(take = 20) {
+
+  async publishAllApproved(take: number = 20) {
     const videos = await this.prisma.video.findMany({
       where: {
         status: "APPROVED",
@@ -187,12 +211,14 @@ export class ModerationService {
       },
       take,
     });
+
     const published = [];
     for (const video of videos) {
       published.push(await this.publishApprovedVideo(video.id));
     }
     return published;
   }
+
   private evaluateVideo(video: {
     title: string;
     category: string;
@@ -224,14 +250,16 @@ export class ModerationService {
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
+
     const blockedTerms = this.findBlockedTerms(text);
     const sensitiveCategory = this.isSensitiveCategory(video.category);
     const textRiskScore = blockedTerms.length > 0 ? 0.9 : 0.12;
     const mediaRiskScore = video.videoUrl ? 0.08 : 0.35;
     const copyrightRiskScore = 0.12;
     const brandSafetyScore = blockedTerms.length > 0 ? 0.35 : 0.92;
-    const factSafetyScore = video.script?.factScore ?? 0.75;
+    const factSafetyScore = video.script?.factScore || 0.75;
     const creatorTrustScore = (video.creator?.trustScore ?? 80) / 100;
+
     const safetyScore =
       brandSafetyScore * 0.3 +
       factSafetyScore * 0.25 +
@@ -239,13 +267,16 @@ export class ModerationService {
       (1 - textRiskScore) * 0.15 +
       (1 - mediaRiskScore) * 0.1 +
       (1 - copyrightRiskScore) * 0.05;
+
     const requiresHumanReview =
       sensitiveCategory ||
       factSafetyScore < 0.75 ||
       safetyScore < env.moderationThreshold ||
       blockedTerms.length > 0;
+
     let action: ModerationAction = "ALLOW";
     let reason = "Passed automated moderation";
+
     if (blockedTerms.length > 0) {
       action = "BLOCK";
       reason = `Blocked terms detected: ${blockedTerms.join(", ")}`;
@@ -256,6 +287,7 @@ export class ModerationService {
       action = "LIMIT";
       reason = "Approved with limited distribution";
     }
+
     return {
       action,
       score: Number(safetyScore.toFixed(4)),
@@ -272,6 +304,7 @@ export class ModerationService {
       },
     };
   }
+
   private findBlockedTerms(text: string): string[] {
     const blocked = [
       "guaranteed profit",
@@ -287,6 +320,7 @@ export class ModerationService {
     ];
     return blocked.filter((term) => text.includes(term));
   }
+
   private isSensitiveCategory(category: string): boolean {
     const sensitiveCategories = [
       "politics",
