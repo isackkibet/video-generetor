@@ -13,5 +13,13 @@ apps/mobile_flutter/pubspec.lock
 apps/admin_web/.next
 apps/admin_web/node_modules
 apps/admin_web/out
+apps/mobile_flutter/linux/
+apps/mobile_flutter/macos/
+apps/mobile_flutter/windows/
+apps/mobile_flutter/ios/
+apps/mobile_flutter/android/
+apps/mobile_flutter/web/
+apps/mobile_flutter/.flutter-plugins
+apps/mobile_flutter/.flutter-plugins-dependencies
 .idea
 .vscode
