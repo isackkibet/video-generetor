@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma.service";
-import { Prisma } from "@prisma/client"; // ✅ add this import
 import {
   calculateRankScore,
   freshnessScoreFromDate,
@@ -24,12 +23,14 @@ type RankedVideo = {
   language: string;
   publishedAt: Date | null;
   rankScore: number;
+  viralProbability: number;
   scoreBreakdown: {
     engagementScore: number;
     interestScore: number;
     localityScore: number;
     freshnessScore: number;
     qualityScore: number;
+    viralProbability: number;
   };
 };
 
@@ -43,31 +44,44 @@ export class RecommendationService {
     const videos = await this.prisma.video.findMany({
       where: {
         status: "PUBLISHED",
-        videoUrl: { not: null },
+        videoUrl: {
+          not: null,
+        },
         language: input.language || undefined,
         OR: [
-          { region: input.region || undefined },
-          { country: input.country || undefined },
-          { region: null },
+          {
+            region: input.region || undefined,
+          },
+          {
+            country: input.country || undefined,
+          },
+          {
+            region: null,
+          },
         ],
       },
       include: {
         score: true,
         creator: true,
         feedEvents: {
-          where: { userId: input.userId },
+          where: {
+            userId: input.userId,
+          },
           take: 20,
-          orderBy: { createdAt: "desc" },
+          orderBy: {
+            createdAt: "desc",
+          },
         },
       },
-      orderBy: { publishedAt: "desc" },
+      orderBy: {
+        publishedAt: "desc",
+      },
       take: take * 3,
     });
 
-    const ranked = videos
-      .map((video) => {
+    const rankedVideos = await Promise.all(
+      videos.map(async (video) => {
         const interestScore = this.estimateInterestScore({
-          videoCategory: video.category,
           userEvents: video.feedEvents.map((event) => event.action),
         });
 
@@ -88,12 +102,19 @@ export class RecommendationService {
           video.score?.qualityScore ??
           (video.creator?.trustScore ? video.creator.trustScore / 100 : 0.75);
 
-        const rankScore = calculateRankScore({
+        const viralProbability = video.score?.viralProbability ?? 0.7;
+
+        const baseRankScore = calculateRankScore({
           engagementScore,
           interestScore,
           localityScore,
           freshnessScore,
           qualityScore,
+        });
+
+        const rankScore = this.applyViralBoost({
+          baseRankScore,
+          viralProbability,
         });
 
         return {
@@ -108,25 +129,29 @@ export class RecommendationService {
           language: video.language,
           publishedAt: video.publishedAt,
           rankScore: Number(rankScore.toFixed(4)),
+          viralProbability,
           scoreBreakdown: {
             engagementScore,
             interestScore,
             localityScore,
             freshnessScore,
             qualityScore,
+            viralProbability,
           },
         };
-      })
+      }),
+    );
+
+    return rankedVideos
       .sort((a, b) => b.rankScore - a.rankScore)
       .slice(0, take);
-
-    return ranked;
   }
 
   async createFeedEvent(input: CreateFeedEventRequest) {
     const video = await this.prisma.video.findUnique({
       where: { id: input.videoId },
     });
+
     if (!video) {
       throw new NotFoundException(`Video not found: ${input.videoId}`);
     }
@@ -138,7 +163,7 @@ export class RecommendationService {
         action: input.action,
         watchMs: input.watchMs,
         region: input.region,
-        metadata: input.metadata as Prisma.InputJsonValue, // ✅ cast here
+        metadata: input.metadata as any,
       },
     });
 
@@ -168,21 +193,22 @@ export class RecommendationService {
         moderationLogs: true,
       },
     });
+
     if (!video) {
       throw new NotFoundException(`Video not found: ${id}`);
     }
+
     return video;
   }
 
-  private estimateInterestScore(input: {
-    videoCategory: string;
-    userEvents: string[];
-  }): number {
+  private estimateInterestScore(input: { userEvents: string[] }): number {
     if (input.userEvents.length === 0) {
       return 0.72;
     }
+
     const positiveActions = ["like", "share", "comment", "save", "complete"];
     const negativeActions = ["skip"];
+
     let score = 0.72;
     for (const action of input.userEvents) {
       if (positiveActions.includes(action)) {
@@ -218,6 +244,14 @@ export class RecommendationService {
     if (eventCount >= 10) return 0.82;
     if (eventCount >= 5) return 0.76;
     return 0.7;
+  }
+
+  private applyViralBoost(input: {
+    baseRankScore: number;
+    viralProbability: number;
+  }): number {
+    const boost = input.viralProbability * 0.12;
+    return this.clamp(input.baseRankScore + boost);
   }
 
   private clamp(value: number): number {
