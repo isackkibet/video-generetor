@@ -1,11 +1,15 @@
 import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
-import { ModerationAction } from "@prisma/client";
 import { ModerationService } from "./moderation.service";
 import { ModerateVideoRequest } from "../../../contracts/api-contracts";
 import { ok } from "../../shared/http-response";
+
+// Define ModerationAction type locally instead of importing from Prisma
+type ModerationAction = "ALLOW" | "LIMIT" | "REVIEW" | "BLOCK";
+
 @Controller("moderation")
 export class ModerationController {
   constructor(private readonly moderationService: ModerationService) {}
+
   @Post("videos/moderate")
   async moderateVideo(@Body() body: ModerateVideoRequest) {
     const result = await this.moderationService.moderateVideo(body);
@@ -13,6 +17,7 @@ export class ModerationController {
       message: "Video moderation completed",
     });
   }
+
   @Post("videos/moderate-pending")
   async moderatePendingVideos(@Query("take") take?: string) {
     const result = await this.moderationService.moderatePendingVideos(
@@ -22,6 +27,7 @@ export class ModerationController {
       count: result.length,
     });
   }
+
   @Post("videos/:id/publish")
   async publishApprovedVideo(@Param("id") id: string) {
     const result = await this.moderationService.publishApprovedVideo(id);
@@ -29,6 +35,7 @@ export class ModerationController {
       message: "Approved video published",
     });
   }
+
   @Post("videos/publish-approved")
   async publishAllApproved(@Query("take") take?: string) {
     const result = await this.moderationService.publishAllApproved(
@@ -38,6 +45,7 @@ export class ModerationController {
       count: result.length,
     });
   }
+
   @Get("queue")
   async listModerationQueue(
     @Query("action") action?: ModerationAction,
@@ -51,6 +59,7 @@ export class ModerationController {
       count: result.length,
     });
   }
+
   @Get("videos/:id/history")
   async getModerationHistory(@Param("id") id: string) {
     const result = await this.moderationService.getModerationHistory(id);
