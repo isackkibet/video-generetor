@@ -5,14 +5,21 @@ import { publishEvent } from "../../shared/kafka";
 import { KafkaTopics } from "../../../contracts/kafka-events";
 import { ModerateVideoRequest } from "../../../contracts/api-contracts";
 import { createModerationProvider } from "../../../ai/providers/provider-factory";
+// ✅ Added: Import ProviderJobLogger
+import { ProviderJobLogger } from "../../shared/provider-job-logger";
 
 type ProviderModerationAction = "ALLOW" | "LIMIT" | "REVIEW" | "BLOCK";
 
 @Injectable()
 export class ModerationService {
   private readonly moderationProvider = createModerationProvider();
+  // ✅ Added: Class property
+  private readonly providerJobLogger: ProviderJobLogger;
 
-  constructor(private readonly prisma: PrismaService) {}
+  // ✅ Updated: Constructor with ProviderJobLogger initialization
+  constructor(private readonly prisma: PrismaService) {
+    this.providerJobLogger = new ProviderJobLogger(this.prisma);
+  }
 
   async moderateVideo(input: ModerateVideoRequest) {
     const video = await this.prisma.video.findUnique({
@@ -243,8 +250,32 @@ export class ModerationService {
     metadata: Record<string, unknown>;
     fallbackUsed: boolean;
   }> {
+    // ✅ Added: Log provider job start before calling provider
+    const job = await this.providerJobLogger.start({
+      jobType: "MODERATION",
+      providerName: process.env.MODERATION_PROVIDER || "mock",
+      requestPayload: {
+        title: input.title,
+        category: input.category,
+        language: input.language,
+        hasVideoUrl: Boolean(input.videoUrl),
+        hasThumbnailUrl: Boolean(input.thumbnailUrl),
+      },
+    });
+
     try {
       const result = await this.moderationProvider.moderate(input);
+
+      // ✅ Added: Log provider job success after successful result
+      await this.providerJobLogger.success({
+        jobId: job.id,
+        responsePayload: {
+          action: result.action,
+          score: result.score,
+          reason: result.reason,
+        },
+      });
+
       return {
         action: result.action,
         score: result.score,
@@ -261,6 +292,13 @@ export class ModerationService {
       const allowFallback =
         process.env.ALLOW_MODERATION_FALLBACK === "true" ||
         process.env.MODERATION_PROVIDER === "mock";
+
+      // ✅ Added: Log provider job failure before returning fallback
+      await this.providerJobLogger.fail({
+        jobId: job.id,
+        errorMessage: message,
+        fallbackUsed: allowFallback,
+      });
 
       if (!allowFallback) {
         return {
