@@ -170,3 +170,17 @@ button.secondary {
     grid-template-columns: 1fr;
   }
 }
+
+select,
+input {
+ background: #10101c;
+ color: #ffffff;
+ border: 1px solid #24243a;
+ border-radius: 12px;
+ padding: 11px 14px;
+ outline: none;
+}
+select:focus,
+input:focus {
+ border-color: #7c3aed;
+}
