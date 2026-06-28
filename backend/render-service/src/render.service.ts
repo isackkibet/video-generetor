@@ -7,28 +7,30 @@ import {
   CreateVideoJobRequest,
   RenderVideoRequest,
 } from "../../../contracts/api-contracts";
-
+import { MediaRenderPipeline } from "./media-render.pipeline";
+type VideoStatus =
+  | "DRAFT"
+  | "SCRIPTED"
+  | "RENDERING"
+  | "MODERATION"
+  | "APPROVED"
+  | "PUBLISHED"
+  | "REJECTED"
+  | "FAILED";
 @Injectable()
 export class RenderService {
+  private readonly mediaPipeline = new MediaRenderPipeline();
   constructor(private readonly prisma: PrismaService) {}
-
   async createVideoJob(input: CreateVideoJobRequest) {
     const script = await this.prisma.script.findUnique({
       where: { id: input.scriptId },
-      include: { trend: true },
+      include: {
+        trend: true,
+      },
     });
     if (!script) {
       throw new NotFoundException(`Script not found: ${input.scriptId}`);
     }
-
-    // ✅ Skip if a video already exists for this script
-    const existingVideo = await this.prisma.video.findFirst({
-      where: { scriptId: script.id },
-    });
-    if (existingVideo) {
-      return existingVideo;
-    }
-
     let avatarId = input.avatarId;
     if (!avatarId) {
       const avatar = await this.prisma.avatar.findFirst({
@@ -38,13 +40,15 @@ export class RenderService {
             { category: script.trend?.category || "general" },
             { category: "general" },
             { category: "motivation" },
+            { category: "campus" },
           ],
         },
-        orderBy: { createdAt: "asc" },
+        orderBy: {
+          createdAt: "asc",
+        },
       });
       avatarId = avatar?.id;
     }
-
     const video = await this.prisma.video.create({
       data: {
         creatorId: input.creatorId,
@@ -60,101 +64,129 @@ export class RenderService {
         status: "SCRIPTED",
       },
     });
-
     await publishEvent(
       KafkaTopics.VIDEO_RENDER_REQUESTED,
-      { videoId: video.id, scriptId: script.id, avatarId },
+      {
+        videoId: video.id,
+        scriptId: script.id,
+        avatarId,
+      },
       video.id,
     );
-
     return video;
   }
-
   async createJobsForUnrenderedScripts(take = 20) {
     const scripts = await this.prisma.script.findMany({
-      where: { videos: { none: {} } },
-      include: { trend: true },
-      orderBy: { createdAt: "desc" },
+      where: {
+        videos: {
+          none: {},
+        },
+      },
+      include: {
+        trend: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
       take,
     });
-
     const created = [];
     for (const script of scripts) {
-      // ✅ Skip duplicate jobs
-      const existingVideo = await this.prisma.video.findFirst({
-        where: { scriptId: script.id },
-      });
-      if (!existingVideo) {
-        created.push(await this.createVideoJob({ scriptId: script.id }));
-      }
+      created.push(
+        await this.createVideoJob({
+          scriptId: script.id,
+        }),
+      );
     }
     return created;
   }
-
   async renderVideo(input: RenderVideoRequest) {
     const video = await this.prisma.video.findUnique({
       where: { id: input.videoId },
-      include: { script: true, avatar: true },
+      include: {
+        script: true,
+        avatar: true,
+      },
     });
     if (!video) {
       throw new NotFoundException(`Video not found: ${input.videoId}`);
     }
-
-    // ✅ Skip if already rendered
-    if (video.status !== "SCRIPTED") {
-      return video;
+    if (!video.script) {
+      throw new Error(`Video ${video.id} cannot render without a script`);
     }
-
-    await this.prisma.video.update({
-      where: { id: video.id },
-      data: { status: "RENDERING" },
-    });
-
-    const mockVideoUrl = `${env.cdnBaseUrl}/videos/${video.id}.mp4`;
-    const mockThumbnailUrl = `${env.cdnBaseUrl}/thumbnails/${video.id}.jpg`;
-
-    const rendered = await this.prisma.video.update({
-      where: { id: video.id },
-      data: {
-        status: "MODERATION",
-        videoUrl: mockVideoUrl,
-        thumbnailUrl: mockThumbnailUrl,
-        durationSeconds: video.durationSeconds || 45,
-      },
-    });
-
-    await publishEvent(
-      KafkaTopics.VIDEO_RENDERED,
-      {
-        videoId: rendered.id,
-        videoUrl: rendered.videoUrl,
-        thumbnailUrl: rendered.thumbnailUrl,
-        durationSeconds: rendered.durationSeconds || 45,
-      },
-      rendered.id,
-    );
-
-    return {
-      video: rendered,
-      renderProvider: env.videoRenderProvider,
-      note: "Mock render completed. Replace this with real TTS, avatar renderer, subtitle compositor, and video encoder in the AI media pipeline.",
-    };
+    await this.markVideoStatus(video.id, "RENDERING");
+    const scriptText = [video.script.hook, video.script.body, video.script.cta]
+      .filter(Boolean)
+      .join("\n\n");
+    try {
+      const rendered = await this.mediaPipeline.render({
+        videoId: video.id,
+        title: video.title,
+        scriptText,
+        voiceId: video.avatar?.voiceId || "ke-neutral-001",
+        avatarId: video.avatarId,
+        avatarCategory: video.avatar?.category || video.category || "general",
+        language: video.language,
+        backgroundStyle: this.resolveBackgroundStyle(video.category),
+      });
+      const updated = await this.prisma.video.update({
+        where: { id: video.id },
+        data: {
+          status: "MODERATION",
+          videoUrl: rendered.videoUrl,
+          thumbnailUrl: rendered.thumbnailUrl,
+          durationSeconds: rendered.durationSeconds,
+        },
+      });
+      await publishEvent(
+        KafkaTopics.VIDEO_RENDERED,
+        {
+          videoId: updated.id,
+          videoUrl: updated.videoUrl,
+          thumbnailUrl: updated.thumbnailUrl,
+          durationSeconds: updated.durationSeconds || 45,
+        },
+        updated.id,
+      );
+      return {
+        video: updated,
+        provider: env.videoRenderProvider,
+        metadata: {
+          audioUrl: rendered.audioUrl,
+          avatarVideoUrl: rendered.avatarVideoUrl,
+          renderProvider: env.videoRenderProvider,
+          ttsProvider: env.ttsProvider,
+          avatarProvider: env.avatarProvider,
+          fallbackUsed: false,
+        },
+      };
+    } catch (error) {
+      return this.handleRenderFailure({
+        videoId: video.id,
+        error,
+      });
+    }
   }
-
   async renderPendingVideos(take = 20) {
     const videos = await this.prisma.video.findMany({
-      where: { status: "SCRIPTED" },
-      orderBy: { createdAt: "asc" },
+      where: {
+        status: "SCRIPTED",
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
       take,
     });
-
     const rendered = [];
     for (const video of videos) {
-      rendered.push(await this.renderVideo({ videoId: video.id }));
+      rendered.push(
+        await this.renderVideo({
+          videoId: video.id,
+        }),
+      );
     }
     return rendered;
   }
-
   async listVideos(params: {
     status?:
       | "DRAFT"
@@ -184,11 +216,12 @@ export class RenderService {
         score: true,
         moderationLogs: true,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: {
+        createdAt: "desc",
+      },
       take: params.take || 50,
     });
   }
-
   async getVideo(id: string) {
     const video = await this.prisma.video.findUnique({
       where: { id },
@@ -204,5 +237,85 @@ export class RenderService {
       throw new NotFoundException(`Video not found: ${id}`);
     }
     return video;
+  }
+  private async markVideoStatus(videoId: string, status: VideoStatus) {
+    return this.prisma.video.update({
+      where: { id: videoId },
+      data: { status },
+    });
+  }
+  private async handleRenderFailure(input: {
+    videoId: string;
+    error: unknown;
+  }) {
+    const message =
+      input.error instanceof Error
+        ? input.error.message
+        : "Unknown render provider failure";
+    const shouldUseMockFallback =
+      process.env.ALLOW_RENDER_FALLBACK === "true" ||
+      env.videoRenderProvider === "mock";
+    if (!shouldUseMockFallback) {
+      const failed = await this.prisma.video.update({
+        where: { id: input.videoId },
+        data: {
+          status: "FAILED",
+        },
+      });
+      return {
+        video: failed,
+        provider: env.videoRenderProvider,
+        metadata: {
+          fallbackUsed: false,
+          failureReason: message,
+          safeFailure: true,
+        },
+      };
+    }
+    const fallbackVideoUrl = `${env.cdnBaseUrl}/videos/${input.videoId}.mp4`;
+    const fallbackThumbnailUrl = `${env.cdnBaseUrl}/thumbnails/${input.videoId}.jpg`;
+    const fallback = await this.prisma.video.update({
+      where: { id: input.videoId },
+      data: {
+        status: "MODERATION",
+        videoUrl: fallbackVideoUrl,
+        thumbnailUrl: fallbackThumbnailUrl,
+        durationSeconds: 45,
+      },
+    });
+    await publishEvent(
+      KafkaTopics.VIDEO_RENDERED,
+      {
+        videoId: fallback.id,
+        videoUrl: fallback.videoUrl,
+        thumbnailUrl: fallback.thumbnailUrl,
+        durationSeconds: fallback.durationSeconds || 45,
+      },
+      fallback.id,
+    );
+    return {
+      video: fallback,
+      provider: "mock_fallback",
+      metadata: {
+        fallbackUsed: true,
+        failureReason: message,
+        renderProvider: env.videoRenderProvider,
+        safeFailure: true,
+      },
+    };
+  }
+  private resolveBackgroundStyle(category: string): string {
+    const map: Record<string, string> = {
+      comedy: "urban Kenyan street, bright, playful",
+      career: "modern office and learning environment",
+      business: "small business workspace, clean, practical",
+      campus: "African campus environment, youthful",
+      motivation: "bright YohPal branded inspirational background",
+      technology: "futuristic digital interface, clean",
+      news: "modern YohPal Live newsroom",
+    };
+    return (
+      map[category.toLowerCase()] || "bright YohPal Live branded background"
+    );
   }
 }
