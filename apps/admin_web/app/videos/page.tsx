@@ -1,5 +1,4 @@
 import { apiGet, apiPost, ApiResponse } from "../../lib/api";
-
 type Video = {
   id: string;
   title: string;
@@ -10,8 +9,14 @@ type Video = {
   region?: string;
   country?: string;
   durationSeconds?: number;
+  renderMetadata?: {
+    ttsProvider?: string;
+    avatarProvider?: string;
+    renderProvider?: string;
+    fallbackUsed: boolean;
+    failureReason?: string;
+  };
 };
-
 async function getVideos() {
   try {
     const response = await apiGet<ApiResponse<Video[]>>(
@@ -22,30 +27,25 @@ async function getVideos() {
     return [];
   }
 }
-
 export default async function VideosPage() {
   const videos = await getVideos();
-
   async function createPendingJobs() {
     "use server";
     await apiPost("/render/jobs/create-pending?take=20");
   }
-
   async function renderPendingVideos() {
     "use server";
     await apiPost("/render/videos/render-pending?take=20");
   }
-
   return (
     <>
       <section className="header">
         <h1>Seed Video Library</h1>
         <p>
-          Create render jobs, mock-render videos, and inspect production
-          readiness.
+          Create render jobs, inspect provider metadata, and review fallback
+          status.
         </p>
       </section>
-
       <div className="actions">
         <form action={createPendingJobs}>
           <button type="submit">Create pending jobs</button>
@@ -56,7 +56,6 @@ export default async function VideosPage() {
           </button>
         </form>
       </div>
-
       <section className="card">
         <table className="table">
           <thead>
@@ -64,9 +63,9 @@ export default async function VideosPage() {
               <th>Title</th>
               <th>Category</th>
               <th>Status</th>
-              <th>Region</th>
-              <th>Duration</th>
-              <th>Video URL</th>
+              <th>Provider</th>
+              <th>Fallback</th>
+              <th>Failure</th>
             </tr>
           </thead>
           <tbody>
@@ -77,9 +76,9 @@ export default async function VideosPage() {
                   <span className="badge">{video.category}</span>
                 </td>
                 <td>{video.status}</td>
-                <td>{video.region || video.country || "Global"}</td>
-                <td>{video.durationSeconds || "-"}s</td>
-                <td>{video.videoUrl ? "Ready" : "Pending"}</td>
+                <td>{video.renderMetadata?.renderProvider || "-"}</td>
+                <td>{video.renderMetadata?.fallbackUsed ? "Yes" : "No"}</td>
+                <td>{video.renderMetadata?.failureReason || "-"}</td>
               </tr>
             ))}
           </tbody>
