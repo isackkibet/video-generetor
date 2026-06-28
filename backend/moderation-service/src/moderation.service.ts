@@ -5,11 +5,15 @@ import { publishEvent } from "../../shared/kafka";
 import { KafkaTopics } from "../../../contracts/kafka-events";
 import { ModerateVideoRequest } from "../../../contracts/api-contracts";
 import { createModerationProvider } from "../../../ai/providers/provider-factory";
+
 type ProviderModerationAction = "ALLOW" | "LIMIT" | "REVIEW" | "BLOCK";
+
 @Injectable()
 export class ModerationService {
   private readonly moderationProvider = createModerationProvider();
+
   constructor(private readonly prisma: PrismaService) {}
+
   async moderateVideo(input: ModerateVideoRequest) {
     const video = await this.prisma.video.findUnique({
       where: { id: input.videoId },
@@ -20,12 +24,15 @@ export class ModerationService {
         moderationLogs: true,
       },
     });
+
     if (!video) {
       throw new NotFoundException(`Video not found: ${input.videoId}`);
     }
+
     if (!video.script) {
       throw new Error(`Video ${video.id} cannot be moderated without a script`);
     }
+
     const text = [
       video.script.title,
       video.script.hook,
@@ -34,6 +41,7 @@ export class ModerationService {
     ]
       .filter(Boolean)
       .join("\n\n");
+
     const providerResult = await this.safeModerateWithProvider({
       title: video.title,
       text,
@@ -42,13 +50,20 @@ export class ModerationService {
       category: video.category,
       language: video.language,
     });
+
     const action = this.toPrismaModerationAction(providerResult.action);
+
+    // ✅ Updated: Added provider audit fields
     const log = await this.prisma.moderationLog.create({
       data: {
         videoId: video.id,
         action,
         score: providerResult.score,
         reason: providerResult.reason,
+        providerName: process.env.MODERATION_PROVIDER || "mock",
+        providerAction: providerResult.action,
+        providerMetadata: providerResult.metadata,
+        fallbackUsed: providerResult.fallbackUsed,
         metadata: {
           ...providerResult.metadata,
           provider: process.env.MODERATION_PROVIDER || "mock",
@@ -56,13 +71,16 @@ export class ModerationService {
         },
       },
     });
+
     const nextStatus = this.resolveNextVideoStatus(action);
+
     const updatedVideo = await this.prisma.video.update({
       where: { id: video.id },
       data: {
         status: nextStatus,
       },
     });
+
     await publishEvent(
       KafkaTopics.VIDEO_MODERATED,
       {
@@ -73,12 +91,14 @@ export class ModerationService {
       },
       video.id,
     );
+
     return {
       video: updatedVideo,
       moderationLog: log,
       result: providerResult,
     };
   }
+
   async moderatePendingVideos(take = 20) {
     const videos = await this.prisma.video.findMany({
       where: {
@@ -92,6 +112,7 @@ export class ModerationService {
       },
       take,
     });
+
     const moderated = [];
     for (const video of videos) {
       moderated.push(
@@ -102,6 +123,7 @@ export class ModerationService {
     }
     return moderated;
   }
+
   async listModerationQueue(params: {
     action?: ModerationAction;
     take?: number;
@@ -125,6 +147,7 @@ export class ModerationService {
       take: params.take || 50,
     });
   }
+
   async getModerationHistory(videoId: string) {
     return this.prisma.moderationLog.findMany({
       where: {
@@ -135,6 +158,7 @@ export class ModerationService {
       },
     });
   }
+
   async publishApprovedVideo(videoId: string) {
     const video = await this.prisma.video.findUnique({
       where: { id: videoId },
@@ -147,18 +171,22 @@ export class ModerationService {
         },
       },
     });
+
     if (!video) {
       throw new NotFoundException(`Video not found: ${videoId}`);
     }
+
     if (video.status !== "APPROVED") {
       throw new Error(
         `Video must be APPROVED before publishing. Current status: ${video.status}`,
       );
     }
+
     const latestLog = video.moderationLogs[0];
     if (!latestLog || !["ALLOW", "LIMIT"].includes(latestLog.action)) {
       throw new Error("Video cannot be published without passing moderation");
     }
+
     const published = await this.prisma.video.update({
       where: { id: video.id },
       data: {
@@ -166,6 +194,7 @@ export class ModerationService {
         publishedAt: new Date(),
       },
     });
+
     await publishEvent(
       KafkaTopics.VIDEO_PUBLISHED,
       {
@@ -178,8 +207,10 @@ export class ModerationService {
       },
       published.id,
     );
+
     return published;
   }
+
   async publishAllApproved(take = 20) {
     const videos = await this.prisma.video.findMany({
       where: {
@@ -190,12 +221,14 @@ export class ModerationService {
       },
       take,
     });
+
     const published = [];
     for (const video of videos) {
       published.push(await this.publishApprovedVideo(video.id));
     }
     return published;
   }
+
   private async safeModerateWithProvider(input: {
     title: string;
     text: string;
@@ -224,9 +257,11 @@ export class ModerationService {
         error instanceof Error
           ? error.message
           : "Unknown moderation provider failure";
+
       const allowFallback =
         process.env.ALLOW_MODERATION_FALLBACK === "true" ||
         process.env.MODERATION_PROVIDER === "mock";
+
       if (!allowFallback) {
         return {
           action: "REVIEW",
@@ -239,6 +274,7 @@ export class ModerationService {
           fallbackUsed: false,
         };
       }
+
       const localFallback = this.localFallbackModeration(
         input.title,
         input.text,
@@ -255,6 +291,7 @@ export class ModerationService {
       };
     }
   }
+
   private localFallbackModeration(
     title: string,
     text: string,
@@ -277,6 +314,7 @@ export class ModerationService {
       "kill",
       "scam guaranteed",
     ].filter((term) => combined.includes(term));
+
     if (blockedTerms.length > 0) {
       return {
         action: "BLOCK",
@@ -288,6 +326,7 @@ export class ModerationService {
         },
       };
     }
+
     return {
       action: "REVIEW",
       score: 0.7,
@@ -297,11 +336,13 @@ export class ModerationService {
       },
     };
   }
+
   private toPrismaModerationAction(
     action: ProviderModerationAction,
   ): ModerationAction {
     return action as ModerationAction;
   }
+
   private resolveNextVideoStatus(action: ModerationAction) {
     if (action === "ALLOW") {
       return "APPROVED";
