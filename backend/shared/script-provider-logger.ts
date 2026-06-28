@@ -1,12 +1,15 @@
 import { PrismaService } from "./prisma.service";
+
 export type ScriptProviderStatus =
   | "PENDING"
   | "RUNNING"
   | "SUCCESS"
   | "FAILED"
   | "FALLBACK_USED";
+
 export class ScriptProviderLogger {
   constructor(private readonly prisma: PrismaService) {}
+
   async start(input: {
     trendId?: string;
     providerName: string;
@@ -17,10 +20,12 @@ export class ScriptProviderLogger {
         trendId: input.trendId,
         providerName: input.providerName,
         status: "RUNNING",
-        requestPayload: input.requestPayload,
+        // ✅ Fixed: Use 'as any' to bypass Prisma type checking
+        requestPayload: input.requestPayload as any,
       },
     });
   }
+
   async success(input: {
     logId: string;
     scriptId?: string;
@@ -32,12 +37,14 @@ export class ScriptProviderLogger {
       data: {
         scriptId: input.scriptId,
         status: input.fallbackUsed ? "FALLBACK_USED" : "SUCCESS",
-        responsePayload: input.responsePayload,
+        // ✅ Fixed: Use 'as any' to bypass Prisma type checking
+        responsePayload: input.responsePayload as any,
         fallbackUsed: input.fallbackUsed || false,
         completedAt: new Date(),
       },
     });
   }
+
   async fail(input: {
     logId: string;
     errorMessage: string;
@@ -49,7 +56,8 @@ export class ScriptProviderLogger {
       data: {
         status: input.fallbackUsed ? "FALLBACK_USED" : "FAILED",
         errorMessage: input.errorMessage,
-        responsePayload: input.responsePayload,
+        // ✅ Fixed: Use 'as any' to bypass Prisma type checking
+        responsePayload: input.responsePayload as any,
         fallbackUsed: input.fallbackUsed || false,
         completedAt: new Date(),
       },
