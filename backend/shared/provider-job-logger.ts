@@ -1,4 +1,5 @@
 import { PrismaService } from "./prisma.service";
+
 export type ProviderJobType =
   | "LLM_SCRIPT"
   | "TTS"
@@ -11,8 +12,10 @@ export type ProviderJobStatus =
   | "SUCCESS"
   | "FAILED"
   | "FALLBACK_USED";
+
 export class ProviderJobLogger {
   constructor(private readonly prisma: PrismaService) {}
+
   async start(input: {
     videoId?: string;
     jobType: ProviderJobType;
@@ -25,10 +28,11 @@ export class ProviderJobLogger {
         jobType: input.jobType,
         providerName: input.providerName,
         status: "RUNNING",
-        requestPayload: input.requestPayload,
+        requestPayload: input.requestPayload as any,
       },
     });
   }
+
   async success(input: {
     jobId: string;
     responsePayload?: Record<string, unknown>;
@@ -38,12 +42,13 @@ export class ProviderJobLogger {
       where: { id: input.jobId },
       data: {
         status: input.fallbackUsed ? "FALLBACK_USED" : "SUCCESS",
-        responsePayload: input.responsePayload,
+        responsePayload: input.responsePayload as any,
         fallbackUsed: input.fallbackUsed || false,
         completedAt: new Date(),
       },
     });
   }
+
   async fail(input: {
     jobId: string;
     errorMessage: string;
@@ -55,8 +60,8 @@ export class ProviderJobLogger {
       data: {
         status: input.fallbackUsed ? "FALLBACK_USED" : "FAILED",
         errorMessage: input.errorMessage,
+        responsePayload: input.responsePayload as any,
         fallbackUsed: input.fallbackUsed || false,
-        responsePayload: input.responsePayload,
         completedAt: new Date(),
       },
     });
