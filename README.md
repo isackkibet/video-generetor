@@ -16,10 +16,22 @@ It solves the cold-start problem by generating, scoring, moderating, publishing,
 8. Recommendation engine ranks the video into user feeds.
 9. Feed events improve future recommendations.
 
-## Prerequisites
+## Services
+
+| Service | Port | Purpose |
+|---|---:|---|
+| API Gateway | 3000 | Main public API |
+| Trend Service | 3001 | Seed trend creation |
+| Script Service | 3002 | AI script generation |
+| Render Service | 3003 | Video render job and mock rendering |
+| Moderation Service | 3004 | Safety checks and publishing |
+| Recommendation Service | 3005 | Seed feed ranking |
+| Admin Web | 3100 | Admin dashboard |
+
+## Required Tools
 
 - Node.js 20+
-- Docker Desktop (optional)
+- Docker Desktop
 - PostgreSQL client (optional)
 - Flutter 3.24+
 - npm
