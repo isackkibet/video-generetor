@@ -125,6 +125,8 @@ model Video {
   creator         Creator?        @relation(fields: [creatorId], references: [id])
   script          Script?         @relation(fields: [scriptId], references: [id])
   score           VideoScore?
+  renderMetadata  RenderMetadata? //Added
+  providerJobs    ProviderJobLog[] //Added
 
   @@index([status])
   @@index([category])
@@ -162,7 +164,11 @@ model ModerationLog {
   metadata   Json?
   reviewedBy String?
   createdAt  DateTime         @default(now())
-  video      Video            @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  providerName String?          //  Added
+  providerAction String?          //  Added
+  providerMetadata Json?            //  Added
+  fallbackUsed  Boolean          @default(false) // Added
+  video       Video            @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
   @@index([action])
   @@index([score])
@@ -204,6 +210,54 @@ model AdCampaign {
   @@index([endsAt])
 }
 
+model RenderMetadata {
+ id               String @id @default(uuid())
+ videoId          String @unique
+ ttsProvider      String?
+ avatarProvider   String?
+ renderProvider   String?
+ audioUrl         String?
+ avatarVideoUrl   String?
+ composedVideoUrl  String?
+ thumbnailUrl     String?
+ durationSeconds  Int?
+ fallbackUsed     Boolean @default(false)
+ failureReason    String?
+ metadata         Json?
+ createdAt        DateTime @default(now())
+ updatedAt        DateTime @updatedAt
+
+ video            Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+ @@index([ttsProvider])
+ @@index([avatarProvider])
+ @@index([renderProvider])
+ @@index([fallbackUsed])
+}
+
+model ProviderJobLog {
+ id               String @id @default(uuid())
+ videoId          String?
+ jobType          ProviderJobType
+ providerName     String
+ status           ProviderJobStatus
+ requestPayload   Json?
+ responsePayload  Json?
+ errorMessage     String?
+ fallbackUsed     Boolean @default(false)
+ startedAt        DateTime @default(now())
+ completedAt      DateTime?
+
+ video            Video? @relation(fields: [videoId], references: [id], onDelete: SetNull)
+
+ @@index([videoId])
+ @@index([jobType])
+ @@index([providerName])
+ @@index([status])
+ @@index([fallbackUsed])
+ @@index([startedAt])
+}
+
 enum VideoStatus {
   DRAFT
   SCRIPTED
@@ -228,4 +282,19 @@ enum AdCampaignStatus {
   PAUSED
   COMPLETED
   CANCELLED
+}
+
+enum ProviderJobType {
+ LLM_SCRIPT
+ TTS
+ AVATAR_VIDEO
+ VIDEO_COMPOSITE
+ MODERATION
+}
+enum ProviderJobStatus {
+ PENDING
+ RUNNING
+ SUCCESS
+ FAILED
+ FALLBACK_USED
 }
