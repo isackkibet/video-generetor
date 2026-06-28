@@ -72,6 +72,7 @@ model Trend {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   scripts    Script[]
+  scriptProviderLog ScriptProviderLog[] // Added
 
   @@index([category])
   @@index([region])
@@ -95,6 +96,7 @@ model Script {
   updatedAt    DateTime @updatedAt
   trend        Trend?   @relation(fields: [trendId], references: [id])
   videos       Video[]
+  providerLogs ScriptProviderLog[] //Added
 
   @@index([language])
   @@index([qualityScore])
@@ -252,6 +254,29 @@ model ProviderJobLog {
 
  @@index([videoId])
  @@index([jobType])
+ @@index([providerName])
+ @@index([status])
+ @@index([fallbackUsed])
+ @@index([startedAt])
+}
+
+model ScriptProviderLog {
+ id               String @id @default(uuid())
+ scriptId         String?
+ trendId          String?
+ providerName     String
+ status           ProviderJobStatus
+ requestPayload   Json?
+ responsePayload  Json?
+ errorMessage     String?
+ fallbackUsed     Boolean @default(false)
+ startedAt        DateTime @default(now())
+ completedAt      DateTime?
+ script           Script? @relation(fields: [scriptId], references: [id], onDelete: SetNull)
+ trend            Trend? @relation(fields: [trendId], references: [id], onDelete: SetNull)
+ 
+ @@index([scriptId])
+ @@index([trendId])
  @@index([providerName])
  @@index([status])
  @@index([fallbackUsed])
