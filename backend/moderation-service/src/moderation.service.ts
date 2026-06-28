@@ -1,33 +1,15 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { ModerationAction } from "@prisma/client";
 import { PrismaService } from "../../shared/prisma.service";
 import { publishEvent } from "../../shared/kafka";
-import { env } from "../../shared/env";
 import { KafkaTopics } from "../../../contracts/kafka-events";
 import { ModerateVideoRequest } from "../../../contracts/api-contracts";
-
-// Define ModerationAction type locally instead of importing from Prisma
-type ModerationAction = "ALLOW" | "LIMIT" | "REVIEW" | "BLOCK";
-
-type ModerationResult = {
-  action: ModerationAction;
-  score: number;
-  reason: string;
-  metadata: {
-    textRiskScore: number;
-    mediaRiskScore: number;
-    copyrightRiskScore: number;
-    brandSafetyScore: number;
-    factSafetyScore: number;
-    requiresHumanReview: boolean;
-    sensitiveCategory: boolean;
-    blockedTerms: string[];
-  };
-};
-
+import { createModerationProvider } from "../../../ai/providers/provider-factory";
+type ProviderModerationAction = "ALLOW" | "LIMIT" | "REVIEW" | "BLOCK";
 @Injectable()
 export class ModerationService {
+  private readonly moderationProvider = createModerationProvider();
   constructor(private readonly prisma: PrismaService) {}
-
   async moderateVideo(input: ModerateVideoRequest) {
     const video = await this.prisma.video.findUnique({
       where: { id: input.videoId },
@@ -38,58 +20,66 @@ export class ModerationService {
         moderationLogs: true,
       },
     });
-
     if (!video) {
       throw new NotFoundException(`Video not found: ${input.videoId}`);
     }
-
-    const result = this.evaluateVideo(video);
-
+    if (!video.script) {
+      throw new Error(`Video ${video.id} cannot be moderated without a script`);
+    }
+    const text = [
+      video.script.title,
+      video.script.hook,
+      video.script.body,
+      video.script.cta,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+    const providerResult = await this.safeModerateWithProvider({
+      title: video.title,
+      text,
+      videoUrl: video.videoUrl,
+      thumbnailUrl: video.thumbnailUrl,
+      category: video.category,
+      language: video.language,
+    });
+    const action = this.toPrismaModerationAction(providerResult.action);
     const log = await this.prisma.moderationLog.create({
       data: {
         videoId: video.id,
-        action: result.action,
-        score: result.score,
-        reason: result.reason,
-        metadata: result.metadata,
+        action,
+        score: providerResult.score,
+        reason: providerResult.reason,
+        metadata: {
+          ...providerResult.metadata,
+          provider: process.env.MODERATION_PROVIDER || "mock",
+          fallbackUsed: providerResult.fallbackUsed,
+        },
       },
     });
-
-    const nextStatus =
-      result.action === "ALLOW"
-        ? "APPROVED"
-        : result.action === "LIMIT"
-          ? "APPROVED"
-          : result.action === "REVIEW"
-            ? "MODERATION"
-            : "REJECTED";
-
+    const nextStatus = this.resolveNextVideoStatus(action);
     const updatedVideo = await this.prisma.video.update({
       where: { id: video.id },
       data: {
         status: nextStatus,
       },
     });
-
     await publishEvent(
       KafkaTopics.VIDEO_MODERATED,
       {
         videoId: video.id,
-        action: result.action,
-        score: result.score,
-        reason: result.reason,
+        action,
+        score: providerResult.score,
+        reason: providerResult.reason,
       },
       video.id,
     );
-
     return {
       video: updatedVideo,
       moderationLog: log,
-      result,
+      result: providerResult,
     };
   }
-
-  async moderatePendingVideos(take: number = 20) {
+  async moderatePendingVideos(take = 20) {
     const videos = await this.prisma.video.findMany({
       where: {
         status: "MODERATION",
@@ -102,7 +92,6 @@ export class ModerationService {
       },
       take,
     });
-
     const moderated = [];
     for (const video of videos) {
       moderated.push(
@@ -113,7 +102,6 @@ export class ModerationService {
     }
     return moderated;
   }
-
   async listModerationQueue(params: {
     action?: ModerationAction;
     take?: number;
@@ -137,7 +125,6 @@ export class ModerationService {
       take: params.take || 50,
     });
   }
-
   async getModerationHistory(videoId: string) {
     return this.prisma.moderationLog.findMany({
       where: {
@@ -148,7 +135,6 @@ export class ModerationService {
       },
     });
   }
-
   async publishApprovedVideo(videoId: string) {
     const video = await this.prisma.video.findUnique({
       where: { id: videoId },
@@ -161,22 +147,18 @@ export class ModerationService {
         },
       },
     });
-
     if (!video) {
       throw new NotFoundException(`Video not found: ${videoId}`);
     }
-
     if (video.status !== "APPROVED") {
       throw new Error(
         `Video must be APPROVED before publishing. Current status: ${video.status}`,
       );
     }
-
     const latestLog = video.moderationLogs[0];
     if (!latestLog || !["ALLOW", "LIMIT"].includes(latestLog.action)) {
       throw new Error("Video cannot be published without passing moderation");
     }
-
     const published = await this.prisma.video.update({
       where: { id: video.id },
       data: {
@@ -184,7 +166,6 @@ export class ModerationService {
         publishedAt: new Date(),
       },
     });
-
     await publishEvent(
       KafkaTopics.VIDEO_PUBLISHED,
       {
@@ -197,11 +178,9 @@ export class ModerationService {
       },
       published.id,
     );
-
     return published;
   }
-
-  async publishAllApproved(take: number = 20) {
+  async publishAllApproved(take = 20) {
     const videos = await this.prisma.video.findMany({
       where: {
         status: "APPROVED",
@@ -211,102 +190,82 @@ export class ModerationService {
       },
       take,
     });
-
     const published = [];
     for (const video of videos) {
       published.push(await this.publishApprovedVideo(video.id));
     }
     return published;
   }
-
-  private evaluateVideo(video: {
+  private async safeModerateWithProvider(input: {
     title: string;
-    category: string;
+    text: string;
     videoUrl: string | null;
-    script: {
-      title: string;
-      hook: string;
-      body: string;
-      cta: string | null;
-      factScore: number;
-      qualityScore: number;
-    } | null;
-    score: {
-      viralProbability: number;
-      engagementScore: number;
-      qualityScore: number;
-    } | null;
-    creator: {
-      trustScore: number;
-    } | null;
-  }): ModerationResult {
-    const text = [
-      video.title,
-      video.script?.title,
-      video.script?.hook,
-      video.script?.body,
-      video.script?.cta,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-
-    const blockedTerms = this.findBlockedTerms(text);
-    const sensitiveCategory = this.isSensitiveCategory(video.category);
-    const textRiskScore = blockedTerms.length > 0 ? 0.9 : 0.12;
-    const mediaRiskScore = video.videoUrl ? 0.08 : 0.35;
-    const copyrightRiskScore = 0.12;
-    const brandSafetyScore = blockedTerms.length > 0 ? 0.35 : 0.92;
-    const factSafetyScore = video.script?.factScore || 0.75;
-    const creatorTrustScore = (video.creator?.trustScore ?? 80) / 100;
-
-    const safetyScore =
-      brandSafetyScore * 0.3 +
-      factSafetyScore * 0.25 +
-      creatorTrustScore * 0.15 +
-      (1 - textRiskScore) * 0.15 +
-      (1 - mediaRiskScore) * 0.1 +
-      (1 - copyrightRiskScore) * 0.05;
-
-    const requiresHumanReview =
-      sensitiveCategory ||
-      factSafetyScore < 0.75 ||
-      safetyScore < env.moderationThreshold ||
-      blockedTerms.length > 0;
-
-    let action: ModerationAction = "ALLOW";
-    let reason = "Passed automated moderation";
-
-    if (blockedTerms.length > 0) {
-      action = "BLOCK";
-      reason = `Blocked terms detected: ${blockedTerms.join(", ")}`;
-    } else if (requiresHumanReview) {
-      action = "REVIEW";
-      reason = "Requires human moderation review";
-    } else if (safetyScore < 0.85) {
-      action = "LIMIT";
-      reason = "Approved with limited distribution";
+    thumbnailUrl: string | null;
+    category: string;
+    language: string;
+  }): Promise<{
+    action: ProviderModerationAction;
+    score: number;
+    reason: string;
+    metadata: Record<string, unknown>;
+    fallbackUsed: boolean;
+  }> {
+    try {
+      const result = await this.moderationProvider.moderate(input);
+      return {
+        action: result.action,
+        score: result.score,
+        reason: result.reason,
+        metadata: result.metadata,
+        fallbackUsed: false,
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unknown moderation provider failure";
+      const allowFallback =
+        process.env.ALLOW_MODERATION_FALLBACK === "true" ||
+        process.env.MODERATION_PROVIDER === "mock";
+      if (!allowFallback) {
+        return {
+          action: "REVIEW",
+          score: 0.5,
+          reason: `Provider failed. Forced human review: ${message}`,
+          metadata: {
+            providerFailure: true,
+            safeFailure: true,
+          },
+          fallbackUsed: false,
+        };
+      }
+      const localFallback = this.localFallbackModeration(
+        input.title,
+        input.text,
+      );
+      return {
+        ...localFallback,
+        metadata: {
+          ...localFallback.metadata,
+          providerFailure: true,
+          providerFailureReason: message,
+          safeFailure: true,
+        },
+        fallbackUsed: true,
+      };
     }
-
-    return {
-      action,
-      score: Number(safetyScore.toFixed(4)),
-      reason,
-      metadata: {
-        textRiskScore,
-        mediaRiskScore,
-        copyrightRiskScore,
-        brandSafetyScore,
-        factSafetyScore,
-        requiresHumanReview,
-        sensitiveCategory,
-        blockedTerms,
-      },
-    };
   }
-
-  private findBlockedTerms(text: string): string[] {
-    const blocked = [
+  private localFallbackModeration(
+    title: string,
+    text: string,
+  ): {
+    action: ProviderModerationAction;
+    score: number;
+    reason: string;
+    metadata: Record<string, unknown>;
+  } {
+    const combined = `${title} ${text}`.toLowerCase();
+    const blockedTerms = [
       "guaranteed profit",
       "cure disease",
       "vote for",
@@ -317,23 +276,42 @@ export class ModerationService {
       "legal advice",
       "kill",
       "scam guaranteed",
-    ];
-    return blocked.filter((term) => text.includes(term));
+    ].filter((term) => combined.includes(term));
+    if (blockedTerms.length > 0) {
+      return {
+        action: "BLOCK",
+        score: 0.25,
+        reason: `Fallback blocked terms detected: ${blockedTerms.join(", ")}`,
+        metadata: {
+          blockedTerms,
+          fallbackEngine: "local_keyword_safety",
+        },
+      };
+    }
+    return {
+      action: "REVIEW",
+      score: 0.7,
+      reason: "Fallback moderation requires human review",
+      metadata: {
+        fallbackEngine: "local_keyword_safety",
+      },
+    };
   }
-
-  private isSensitiveCategory(category: string): boolean {
-    const sensitiveCategories = [
-      "politics",
-      "health",
-      "finance",
-      "religion",
-      "ethnicity",
-      "crime",
-      "children",
-      "breaking_news",
-      "legal",
-      "medical",
-    ];
-    return sensitiveCategories.includes(category.toLowerCase());
+  private toPrismaModerationAction(
+    action: ProviderModerationAction,
+  ): ModerationAction {
+    return action as ModerationAction;
+  }
+  private resolveNextVideoStatus(action: ModerationAction) {
+    if (action === "ALLOW") {
+      return "APPROVED";
+    }
+    if (action === "LIMIT") {
+      return "APPROVED";
+    }
+    if (action === "REVIEW") {
+      return "MODERATION";
+    }
+    return "REJECTED";
   }
 }
