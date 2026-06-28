@@ -29,6 +29,7 @@ export default function RootLayout({
               <Link href="/scripts">Scripts</Link>
               <Link href="/videos">Videos</Link>
               <Link href="/moderation">Moderation</Link>
+              <Link href="/provider-jobs">Provider Jobs</Link> {/* ✅ Added */}
             </nav>
           </aside>
           <main className="main">{children}</main>
