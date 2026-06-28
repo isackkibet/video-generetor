@@ -8,6 +8,7 @@ import {
   RenderVideoRequest,
 } from "../../../contracts/api-contracts";
 import { MediaRenderPipeline } from "./media-render.pipeline";
+
 type VideoStatus =
   | "DRAFT"
   | "SCRIPTED"
@@ -17,10 +18,15 @@ type VideoStatus =
   | "PUBLISHED"
   | "REJECTED"
   | "FAILED";
+
 @Injectable()
 export class RenderService {
-  private readonly mediaPipeline = new MediaRenderPipeline();
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly mediaPipeline: MediaRenderPipeline;
+
+  constructor(private readonly prisma: PrismaService) {
+    this.mediaPipeline = new MediaRenderPipeline(this.prisma);
+  }
+
   async createVideoJob(input: CreateVideoJobRequest) {
     const script = await this.prisma.script.findUnique({
       where: { id: input.scriptId },
@@ -28,10 +34,13 @@ export class RenderService {
         trend: true,
       },
     });
+
     if (!script) {
       throw new NotFoundException(`Script not found: ${input.scriptId}`);
     }
+
     let avatarId = input.avatarId;
+
     if (!avatarId) {
       const avatar = await this.prisma.avatar.findFirst({
         where: {
@@ -49,6 +58,7 @@ export class RenderService {
       });
       avatarId = avatar?.id;
     }
+
     const video = await this.prisma.video.create({
       data: {
         creatorId: input.creatorId,
@@ -64,6 +74,7 @@ export class RenderService {
         status: "SCRIPTED",
       },
     });
+
     await publishEvent(
       KafkaTopics.VIDEO_RENDER_REQUESTED,
       {
@@ -73,8 +84,10 @@ export class RenderService {
       },
       video.id,
     );
+
     return video;
   }
+
   async createJobsForUnrenderedScripts(take = 20) {
     const scripts = await this.prisma.script.findMany({
       where: {
@@ -90,6 +103,7 @@ export class RenderService {
       },
       take,
     });
+
     const created = [];
     for (const script of scripts) {
       created.push(
@@ -100,6 +114,7 @@ export class RenderService {
     }
     return created;
   }
+
   async renderVideo(input: RenderVideoRequest) {
     const video = await this.prisma.video.findUnique({
       where: { id: input.videoId },
@@ -108,16 +123,21 @@ export class RenderService {
         avatar: true,
       },
     });
+
     if (!video) {
       throw new NotFoundException(`Video not found: ${input.videoId}`);
     }
+
     if (!video.script) {
       throw new Error(`Video ${video.id} cannot render without a script`);
     }
+
     await this.markVideoStatus(video.id, "RENDERING");
+
     const scriptText = [video.script.hook, video.script.body, video.script.cta]
       .filter(Boolean)
       .join("\n\n");
+
     try {
       const rendered = await this.mediaPipeline.render({
         videoId: video.id,
@@ -129,6 +149,8 @@ export class RenderService {
         language: video.language,
         backgroundStyle: this.resolveBackgroundStyle(video.category),
       });
+
+      // ✅ Updated: Persist RenderMetadata on successful render
       const updated = await this.prisma.video.update({
         where: { id: video.id },
         data: {
@@ -136,8 +158,44 @@ export class RenderService {
           videoUrl: rendered.videoUrl,
           thumbnailUrl: rendered.thumbnailUrl,
           durationSeconds: rendered.durationSeconds,
+          renderMetadata: {
+            upsert: {
+              create: {
+                ttsProvider: env.ttsProvider,
+                avatarProvider: env.avatarProvider,
+                renderProvider: env.videoRenderProvider,
+                audioUrl: rendered.audioUrl,
+                avatarVideoUrl: rendered.avatarVideoUrl,
+                composedVideoUrl: rendered.videoUrl,
+                thumbnailUrl: rendered.thumbnailUrl,
+                durationSeconds: rendered.durationSeconds,
+                fallbackUsed: false,
+                metadata: {
+                  pipeline: "media-render.pipeline",
+                  safeFailure: false,
+                },
+              },
+              update: {
+                ttsProvider: env.ttsProvider,
+                avatarProvider: env.avatarProvider,
+                renderProvider: env.videoRenderProvider,
+                audioUrl: rendered.audioUrl,
+                avatarVideoUrl: rendered.avatarVideoUrl,
+                composedVideoUrl: rendered.videoUrl,
+                thumbnailUrl: rendered.thumbnailUrl,
+                durationSeconds: rendered.durationSeconds,
+                fallbackUsed: false,
+                failureReason: null,
+                metadata: {
+                  pipeline: "media-render.pipeline",
+                  safeFailure: false,
+                },
+              },
+            },
+          },
         },
       });
+
       await publishEvent(
         KafkaTopics.VIDEO_RENDERED,
         {
@@ -148,6 +206,7 @@ export class RenderService {
         },
         updated.id,
       );
+
       return {
         video: updated,
         provider: env.videoRenderProvider,
@@ -167,6 +226,7 @@ export class RenderService {
       });
     }
   }
+
   async renderPendingVideos(take = 20) {
     const videos = await this.prisma.video.findMany({
       where: {
@@ -177,6 +237,7 @@ export class RenderService {
       },
       take,
     });
+
     const rendered = [];
     for (const video of videos) {
       rendered.push(
@@ -187,6 +248,7 @@ export class RenderService {
     }
     return rendered;
   }
+
   async listVideos(params: {
     status?:
       | "DRAFT"
@@ -222,6 +284,7 @@ export class RenderService {
       take: params.take || 50,
     });
   }
+
   async getVideo(id: string) {
     const video = await this.prisma.video.findUnique({
       where: { id },
@@ -233,17 +296,21 @@ export class RenderService {
         moderationLogs: true,
       },
     });
+
     if (!video) {
       throw new NotFoundException(`Video not found: ${id}`);
     }
+
     return video;
   }
+
   private async markVideoStatus(videoId: string, status: VideoStatus) {
     return this.prisma.video.update({
       where: { id: videoId },
       data: { status },
     });
   }
+
   private async handleRenderFailure(input: {
     videoId: string;
     error: unknown;
@@ -252,16 +319,40 @@ export class RenderService {
       input.error instanceof Error
         ? input.error.message
         : "Unknown render provider failure";
+
     const shouldUseMockFallback =
       process.env.ALLOW_RENDER_FALLBACK === "true" ||
       env.videoRenderProvider === "mock";
+
+    // ✅ Updated: Persist renderMetadata on failure with no fallback
     if (!shouldUseMockFallback) {
       const failed = await this.prisma.video.update({
         where: { id: input.videoId },
         data: {
           status: "FAILED",
+          renderMetadata: {
+            upsert: {
+              create: {
+                renderProvider: env.videoRenderProvider,
+                fallbackUsed: false,
+                failureReason: message,
+                metadata: {
+                  safeFailure: true,
+                },
+              },
+              update: {
+                renderProvider: env.videoRenderProvider,
+                fallbackUsed: false,
+                failureReason: message,
+                metadata: {
+                  safeFailure: true,
+                },
+              },
+            },
+          },
         },
       });
+
       return {
         video: failed,
         provider: env.videoRenderProvider,
@@ -272,8 +363,11 @@ export class RenderService {
         },
       };
     }
+
+    // ✅ Updated: Persist renderMetadata on fallback
     const fallbackVideoUrl = `${env.cdnBaseUrl}/videos/${input.videoId}.mp4`;
     const fallbackThumbnailUrl = `${env.cdnBaseUrl}/thumbnails/${input.videoId}.jpg`;
+
     const fallback = await this.prisma.video.update({
       where: { id: input.videoId },
       data: {
@@ -281,8 +375,39 @@ export class RenderService {
         videoUrl: fallbackVideoUrl,
         thumbnailUrl: fallbackThumbnailUrl,
         durationSeconds: 45,
+        renderMetadata: {
+          upsert: {
+            create: {
+              ttsProvider: env.ttsProvider,
+              avatarProvider: env.avatarProvider,
+              renderProvider: "mock_fallback",
+              composedVideoUrl: fallbackVideoUrl,
+              thumbnailUrl: fallbackThumbnailUrl,
+              durationSeconds: 45,
+              fallbackUsed: true,
+              failureReason: message,
+              metadata: {
+                originalProvider: env.videoRenderProvider,
+                safeFailure: true,
+              },
+            },
+            update: {
+              renderProvider: "mock_fallback",
+              composedVideoUrl: fallbackVideoUrl,
+              thumbnailUrl: fallbackThumbnailUrl,
+              durationSeconds: 45,
+              fallbackUsed: true,
+              failureReason: message,
+              metadata: {
+                originalProvider: env.videoRenderProvider,
+                safeFailure: true,
+              },
+            },
+          },
+        },
       },
     });
+
     await publishEvent(
       KafkaTopics.VIDEO_RENDERED,
       {
@@ -293,6 +418,7 @@ export class RenderService {
       },
       fallback.id,
     );
+
     return {
       video: fallback,
       provider: "mock_fallback",
@@ -304,6 +430,7 @@ export class RenderService {
       },
     };
   }
+
   private resolveBackgroundStyle(category: string): string {
     const map: Record<string, string> = {
       comedy: "urban Kenyan street, bright, playful",
@@ -314,6 +441,7 @@ export class RenderService {
       technology: "futuristic digital interface, clean",
       news: "modern YohPal Live newsroom",
     };
+
     return (
       map[category.toLowerCase()] || "bright YohPal Live branded background"
     );
