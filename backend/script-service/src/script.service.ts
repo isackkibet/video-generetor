@@ -4,12 +4,16 @@ import { publishEvent } from "../../shared/kafka";
 import { KafkaTopics } from "../../../contracts/kafka-events";
 import { GenerateScriptRequest } from "../../../contracts/api-contracts";
 import { ContentGenerationWorkflow } from "../../../ai/workflows/content-generation.workflow";
+import { ScriptProviderLogger } from "../../shared/script-provider-logger";
 
 @Injectable()
 export class ScriptService {
   private readonly workflow = new ContentGenerationWorkflow();
+  private readonly scriptProviderLogger: ScriptProviderLogger;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {
+    this.scriptProviderLogger = new ScriptProviderLogger(this.prisma);
+  }
 
   async generateFromTrend(input: GenerateScriptRequest) {
     const trend = await this.prisma.trend.findUnique({
@@ -20,46 +24,99 @@ export class ScriptService {
       throw new NotFoundException(`Trend not found: ${input.trendId}`);
     }
 
-    const result = await this.workflow.run({
-      topic: trend.topic,
-      category: trend.category,
-      region: trend.region,
-      country: trend.country,
-      language: "en",
-    });
+    const providerName = process.env.LLM_PROVIDER || "mock";
 
-    const script = await this.prisma.script.create({
-      data: {
-        trendId: trend.id,
-        title: result.script.title,
-        hook: result.script.hook,
-        body: result.script.body,
-        cta: result.script.cta,
-        language: result.script.language,
-        durationHint: result.script.durationHint,
-        qualityScore: result.script.qualityScore,
-        factScore: result.factCheck.factScore,
-        // ✅ Fixed: Use 'as any' to bypass Prisma type checking
-        metadata: result.strategy as any,
+    // ✅ Start provider log
+    const log = await this.scriptProviderLogger.start({
+      trendId: trend.id,
+      providerName,
+      requestPayload: {
+        topic: trend.topic,
+        category: trend.category,
+        region: trend.region,
+        country: trend.country,
+        language: "en",
       },
     });
 
-    await publishEvent(
-      KafkaTopics.SCRIPT_CREATED,
-      {
+    try {
+      const result = await this.workflow.run({
+        topic: trend.topic,
+        category: trend.category,
+        region: trend.region,
+        country: trend.country,
+        language: "en",
+      });
+
+      const script = await this.prisma.script.create({
+        data: {
+          trendId: trend.id,
+          title: result.script.title,
+          hook: result.script.hook,
+          body: result.script.body,
+          cta: result.script.cta,
+          language: result.script.language,
+          durationHint: result.script.durationHint,
+          qualityScore: result.script.qualityScore,
+          factScore: result.factCheck.factScore,
+          metadata: {
+            strategy: result.strategy,
+            factCheck: result.factCheck,
+            viralScore: result.viralScore,
+            avatarDirection: result.avatarDirection,
+            publishEligible: result.publishEligible,
+            provider: {
+              name: result.script.providerName,
+              fallbackUsed: result.script.fallbackUsed,
+            },
+          },
+        },
+      });
+
+      // ✅ Log success
+      await this.scriptProviderLogger.success({
+        logId: log.id,
         scriptId: script.id,
-        trendId: trend.id,
-        title: script.title,
-        qualityScore: script.qualityScore,
-        factScore: script.factScore,
-      },
-      script.id,
-    );
+        responsePayload: {
+          title: result.script.title,
+          qualityScore: result.script.qualityScore,
+          factScore: result.factCheck.factScore,
+          viralProbability: result.viralScore.viralProbability,
+          publishEligible: result.publishEligible,
+          providerName: result.script.providerName,
+        },
+        fallbackUsed: result.script.fallbackUsed,
+      });
 
-    return {
-      script,
-      workflow: result,
-    };
+      await publishEvent(
+        KafkaTopics.SCRIPT_CREATED,
+        {
+          scriptId: script.id,
+          trendId: trend.id,
+          title: script.title,
+          qualityScore: script.qualityScore,
+          factScore: script.factScore,
+        },
+        script.id,
+      );
+
+      return {
+        script,
+        workflow: result,
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown LLM provider failure";
+
+      // ✅ Log failure
+      await this.scriptProviderLogger.fail({
+        logId: log.id,
+        errorMessage: message,
+        fallbackUsed: false,
+      });
+
+      throw error;
+    }
   }
 
   async generateForAllPendingTrends(take: number = 20) {
@@ -75,7 +132,11 @@ export class ScriptService {
 
     const generated = [];
     for (const trend of trends) {
-      generated.push(await this.generateFromTrend({ trendId: trend.id }));
+      generated.push(
+        await this.generateFromTrend({
+          trendId: trend.id,
+        }),
+      );
     }
     return generated;
   }
@@ -93,8 +154,16 @@ export class ScriptService {
       include: {
         trend: true,
         videos: true,
+        providerLogs: {
+          orderBy: {
+            startedAt: "desc",
+          },
+          take: 5,
+        },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: {
+        createdAt: "desc",
+      },
       take: params.take || 50,
     });
   }
@@ -105,6 +174,11 @@ export class ScriptService {
       include: {
         trend: true,
         videos: true,
+        providerLogs: {
+          orderBy: {
+            startedAt: "desc",
+          },
+        },
       },
     });
 
