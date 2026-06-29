@@ -5,9 +5,11 @@ import {
   SeedFeedRequest,
 } from "../../../contracts/api-contracts";
 import { ok } from "../../shared/http-response";
+
 @Controller()
 export class RecommendationController {
   constructor(private readonly recommendationService: RecommendationService) {}
+
   @Get("feed/seed")
   async getSeedFeed(
     @Query("userId") userId: string,
@@ -28,6 +30,7 @@ export class RecommendationController {
       count: feed.length,
     });
   }
+
   @Post("feed/events")
   async createFeedEvent(@Body() body: CreateFeedEventRequest) {
     const event = await this.recommendationService.createFeedEvent(body);
@@ -35,6 +38,15 @@ export class RecommendationController {
       message: "Feed event recorded",
     });
   }
+
+  // ✅ NEW: Feed diagnostics endpoint
+  @Get("feed/diagnostics/:userId")
+  async getUserFeedDiagnostics(@Param("userId") userId: string) {
+    const result =
+      await this.recommendationService.getUserFeedDiagnostics(userId);
+    return ok(result);
+  }
+
   @Get("videos/:id")
   async getVideoById(@Param("id") id: string) {
     const video = await this.recommendationService.getVideoById(id);
