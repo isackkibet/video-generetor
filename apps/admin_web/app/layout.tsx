@@ -30,9 +30,8 @@ export default function RootLayout({
               <Link href="/videos">Videos</Link>
               <Link href="/moderation">Moderation</Link>
               <Link href="/provider-jobs">Provider Jobs</Link>
-              <Link href="/script-provider-logs">
-                Script Provider Logs
-              </Link>{" "}
+              <Link href="/script-provider-logs">Script Provider Logs</Link>
+              <Link href="/feed-diagnostics">Feed Diagnostics</Link>{" "}
               {/* ✅ Added */}
             </nav>
           </aside>
