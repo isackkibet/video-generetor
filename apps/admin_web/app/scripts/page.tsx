@@ -1,4 +1,5 @@
 import { apiGet, apiPost, ApiResponse } from "../../lib/api";
+
 type Script = {
   id: string;
   title: string;
@@ -25,6 +26,7 @@ type Script = {
     category: string;
   };
 };
+
 async function getScripts() {
   try {
     const response = await apiGet<ApiResponse<Script[]>>("/scripts?take=50");
@@ -33,21 +35,28 @@ async function getScripts() {
     return [];
   }
 }
+
 export default async function ScriptsPage() {
   const scripts = await getScripts();
+
   async function generatePendingScripts() {
     "use server";
+    const { requireActionPermission } = await import("../../lib/action-guard");
+    await requireActionPermission("GENERATE");
     await apiPost("/scripts/generate-pending?take=20");
   }
+
   return (
     <>
       <section className="header">
         <h1>AI Script Factory</h1>
         <p>Generate scripts and inspect LLM provider audit status.</p>
       </section>
+
       <form action={generatePendingScripts} className="actions">
         <button type="submit">Generate pending scripts</button>
       </form>
+
       <section className="card">
         <table className="table">
           <thead>
