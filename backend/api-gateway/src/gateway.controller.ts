@@ -201,7 +201,7 @@ export class GatewayController {
     };
   }
 
-  // ✅ NEW: Script Provider Log Routes (Batch 20)
+  // ✅ Script Provider Log Routes (Batch 20)
   @Get("script-provider-logs")
   async listScriptProviderLogs(
     @Query("scriptId") scriptId?: string,
@@ -247,5 +247,11 @@ export class GatewayController {
       success: true,
       data: log,
     };
+  }
+
+  // ✅ NEW: Feed Diagnostics Route (Batch 22)
+  @Get("feed/diagnostics/:userId")
+  async getUserFeedDiagnostics(@Param("userId") userId: string) {
+    return this.gatewayService.getUserFeedDiagnostics(userId);
   }
 }
