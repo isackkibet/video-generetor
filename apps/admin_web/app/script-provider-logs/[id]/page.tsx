@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { apiGet, ApiResponse } from "../../../lib/api";
+// ✅ Added: Auth imports
+import { requireAdminSession, canAccess } from "../../../lib/auth";
+
 type ScriptProviderLogDetail = {
   id: string;
   providerName: string;
@@ -40,6 +43,7 @@ type ScriptProviderLogDetail = {
     country?: string;
   };
 };
+
 async function getLog(id: string) {
   try {
     const response = await apiGet<ApiResponse<ScriptProviderLogDetail>>(
@@ -50,6 +54,7 @@ async function getLog(id: string) {
     return null;
   }
 }
+
 function JsonBlock({ value }: { value: unknown }) {
   return (
     <pre
@@ -66,12 +71,27 @@ function JsonBlock({ value }: { value: unknown }) {
     </pre>
   );
 }
+
 export default async function ScriptProviderLogDetailPage({
   params,
 }: {
   params: { id: string };
 }) {
+  // ✅ Added: Admin access check
+  const session = requireAdminSession();
+  if (!canAccess(session.role, "ADMIN")) {
+    return (
+      <>
+        <section className="header">
+          <h1>Access Denied</h1>
+          <p>Only super admins can view script provider log details.</p>
+        </section>
+      </>
+    );
+  }
+
   const log = await getLog(params.id);
+
   if (!log) {
     return (
       <>
@@ -83,6 +103,7 @@ export default async function ScriptProviderLogDetailPage({
       </>
     );
   }
+
   return (
     <>
       <section className="header">
@@ -91,6 +112,7 @@ export default async function ScriptProviderLogDetailPage({
           Full request, response, fallback, and generated script audit trail.
         </p>
       </section>
+
       <section className="grid cols-4">
         <div className="card">
           <h3>Provider</h3>
@@ -109,6 +131,7 @@ export default async function ScriptProviderLogDetailPage({
           <div className="statValue">{log.script?.qualityScore ?? "-"}</div>
         </div>
       </section>
+
       <section className="card" style={{ marginTop: 20 }}>
         <h3>Trend</h3>
         <p>
@@ -124,6 +147,7 @@ export default async function ScriptProviderLogDetailPage({
           {log.trend?.region || log.script?.trend?.region || "-"}
         </p>
       </section>
+
       <section className="card" style={{ marginTop: 20 }}>
         <h3>Generated Script</h3>
         <p>
@@ -142,20 +166,24 @@ export default async function ScriptProviderLogDetailPage({
           <strong>Fact Score:</strong> {log.script?.factScore ?? "-"}
         </p>
       </section>
+
       <section className="card" style={{ marginTop: 20 }}>
         <h3>Request Payload</h3>
         <JsonBlock value={log.requestPayload} />
       </section>
+
       <section className="card" style={{ marginTop: 20 }}>
         <h3>Response Payload</h3>
         <JsonBlock value={log.responsePayload} />
       </section>
+
       {log.errorMessage && (
         <section className="card" style={{ marginTop: 20 }}>
           <h3>Error</h3>
           <p>{log.errorMessage}</p>
         </section>
       )}
+
       <section className="card" style={{ marginTop: 20 }}>
         <Link href="/script-provider-logs">Back to script provider logs</Link>
       </section>
