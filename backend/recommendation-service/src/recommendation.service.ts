@@ -10,6 +10,7 @@ import {
   CreateFeedEventRequest,
   SeedFeedRequest,
 } from "../../../contracts/api-contracts";
+import { FeedLearningService } from "../../shared/feed-learning.service";
 
 type RankedVideo = {
   id: string;
@@ -36,7 +37,10 @@ type RankedVideo = {
 
 @Injectable()
 export class RecommendationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly feedLearningService: FeedLearningService,
+  ) {}
 
   async getSeedFeed(input: SeedFeedRequest): Promise<RankedVideo[]> {
     const take = input.take && input.take > 0 ? Math.min(input.take, 100) : 30;
@@ -79,11 +83,23 @@ export class RecommendationService {
       take: take * 3,
     });
 
-    return videos
-      .map((video) => {
-        const interestScore = this.estimateInterestScore({
+    const rankedVideos = await Promise.all(
+      videos.map(async (video) => {
+        // ✅ Learn category score from user history
+        const learnedCategoryScore =
+          await this.feedLearningService.getUserCategoryScore(
+            input.userId,
+            video.category,
+          );
+
+        const behaviorScore = this.estimateInterestScore({
           userEvents: video.feedEvents.map((event) => event.action),
         });
+
+        // ✅ Combine learned and behavior scores
+        const interestScore = this.clamp(
+          learnedCategoryScore * 0.7 + behaviorScore * 0.3,
+        );
 
         const localityScore = this.calculateLocalityScore({
           videoRegion: video.region,
@@ -139,7 +155,10 @@ export class RecommendationService {
             viralProbability,
           },
         };
-      })
+      }),
+    );
+
+    return rankedVideos
       .sort((a, b) => b.rankScore - a.rankScore)
       .slice(0, take);
   }
@@ -160,9 +179,16 @@ export class RecommendationService {
         action: input.action,
         watchMs: input.watchMs,
         region: input.region,
-        // ✅ Fixed: Use 'as any' to bypass Prisma type checking
         metadata: input.metadata as any,
       },
+    });
+
+    // ✅ Update user interest profile based on action
+    await this.feedLearningService.updateUserInterest({
+      userId: input.userId,
+      videoId: input.videoId,
+      action: input.action,
+      watchMs: input.watchMs,
     });
 
     await publishEvent(
@@ -178,6 +204,37 @@ export class RecommendationService {
     );
 
     return event;
+  }
+
+  // ✅ NEW: Get user feed diagnostics
+  async getUserFeedDiagnostics(userId: string) {
+    const profile = await this.prisma.userInterestProfile.findUnique({
+      where: { userId },
+    });
+
+    const recentEvents = await this.prisma.feedEvent.findMany({
+      where: { userId },
+      include: {
+        video: {
+          select: {
+            id: true,
+            title: true,
+            category: true,
+            region: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 50,
+    });
+
+    return {
+      userId,
+      profile,
+      recentEvents,
+    };
   }
 
   async getVideoById(id: string) {
