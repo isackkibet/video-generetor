@@ -1,4 +1,7 @@
 import { apiGet, ApiResponse } from "../../lib/api";
+// ✅ Added: Auth imports
+import { requireAdminSession, canAccess } from "../../lib/auth";
+
 type ProviderJob = {
   id: string;
   videoId?: string;
@@ -16,6 +19,7 @@ type ProviderJob = {
     status: string;
   };
 };
+
 type ProviderSummary = {
   total: number;
   success: number;
@@ -23,6 +27,7 @@ type ProviderSummary = {
   fallback: number;
   running: number;
 };
+
 async function getProviderJobs(
   searchParams: Record<string, string | string[] | undefined>,
 ) {
@@ -35,6 +40,7 @@ async function getProviderJobs(
   if (!query.has("take")) {
     query.set("take", "100");
   }
+
   try {
     const response = await apiGet<ApiResponse<ProviderJob[]>>(
       `/provider-jobs?${query.toString()}`,
@@ -44,6 +50,7 @@ async function getProviderJobs(
     return [];
   }
 }
+
 async function getSummary() {
   try {
     const response = await apiGet<ApiResponse<ProviderSummary>>(
@@ -60,15 +67,30 @@ async function getSummary() {
     };
   }
 }
+
 export default async function ProviderJobsPage({
   searchParams,
 }: {
   searchParams: Record<string, string | string[] | undefined>;
 }) {
+  // ✅ Added: Admin access check
+  const session = requireAdminSession();
+  if (!canAccess(session.role, "ADMIN")) {
+    return (
+      <>
+        <section className="header">
+          <h1>Access Denied</h1>
+          <p>Only super admins can view provider job audit logs.</p>
+        </section>
+      </>
+    );
+  }
+
   const [jobs, summary] = await Promise.all([
     getProviderJobs(searchParams),
     getSummary(),
   ]);
+
   return (
     <>
       <section className="header">
@@ -78,6 +100,7 @@ export default async function ProviderJobsPage({
           render/moderation audit history.
         </p>
       </section>
+
       <section className="grid cols-4">
         <div className="card">
           <h3>Total Jobs</h3>
@@ -96,6 +119,7 @@ export default async function ProviderJobsPage({
           <div className="statValue">{summary.fallback}</div>
         </div>
       </section>
+
       <section className="card" style={{ marginTop: 20 }}>
         <h3>Filters</h3>
         <form className="actions">
@@ -110,6 +134,7 @@ export default async function ProviderJobsPage({
             <option value="VIDEO_COMPOSITE">Video Composite</option>
             <option value="MODERATION">Moderation</option>
           </select>
+
           <select
             name="status"
             defaultValue={(searchParams.status as string) || ""}
@@ -121,6 +146,7 @@ export default async function ProviderJobsPage({
             <option value="FAILED">Failed</option>
             <option value="FALLBACK_USED">Fallback Used</option>
           </select>
+
           <select
             name="fallbackUsed"
             defaultValue={(searchParams.fallbackUsed as string) || ""}
@@ -129,14 +155,17 @@ export default async function ProviderJobsPage({
             <option value="true">Fallback only</option>
             <option value="false">No fallback</option>
           </select>
+
           <input
             name="providerName"
             placeholder="Provider name"
             defaultValue={(searchParams.providerName as string) || ""}
           />
+
           <button type="submit">Apply filters</button>
         </form>
       </section>
+
       <section className="card" style={{ marginTop: 20 }}>
         <table className="table">
           <thead>
