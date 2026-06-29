@@ -9,6 +9,14 @@ type Video = {
   region?: string;
   country?: string;
   durationSeconds?: number;
+  score?: {
+    viralProbability: number;
+    engagementScore: number;
+    watchTimeScore: number;
+    shareScore: number;
+    commentScore: number;
+    qualityScore: number;
+  };
   renderMetadata?: {
     ttsProvider?: string;
     avatarProvider?: string;
@@ -42,7 +50,7 @@ export default async function VideosPage() {
       <section className="header">
         <h1>Seed Video Library</h1>
         <p>
-          Create render jobs, inspect provider metadata, and review fallback
+          Inspect render status, viral score, provider metadata, and fallback
           status.
         </p>
       </section>
@@ -63,9 +71,11 @@ export default async function VideosPage() {
               <th>Title</th>
               <th>Category</th>
               <th>Status</th>
+              <th>Viral</th>
+              <th>Engagement</th>
+              <th>Quality</th>
               <th>Provider</th>
               <th>Fallback</th>
-              <th>Failure</th>
             </tr>
           </thead>
           <tbody>
@@ -76,9 +86,11 @@ export default async function VideosPage() {
                   <span className="badge">{video.category}</span>
                 </td>
                 <td>{video.status}</td>
+                <td>{video.score?.viralProbability ?? "-"}</td>
+                <td>{video.score?.engagementScore ?? "-"}</td>
+                <td>{video.score?.qualityScore ?? "-"}</td>
                 <td>{video.renderMetadata?.renderProvider || "-"}</td>
                 <td>{video.renderMetadata?.fallbackUsed ? "Yes" : "No"}</td>
-                <td>{video.renderMetadata?.failureReason || "-"}</td>
               </tr>
             ))}
           </tbody>
