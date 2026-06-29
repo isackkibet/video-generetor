@@ -10,7 +10,6 @@ import {
   CreateFeedEventRequest,
   SeedFeedRequest,
 } from "../../../contracts/api-contracts";
-
 type RankedVideo = {
   id: string;
   title: string;
@@ -33,14 +32,11 @@ type RankedVideo = {
     viralProbability: number;
   };
 };
-
 @Injectable()
 export class RecommendationService {
   constructor(private readonly prisma: PrismaService) {}
-
   async getSeedFeed(input: SeedFeedRequest): Promise<RankedVideo[]> {
     const take = input.take && input.take > 0 ? Math.min(input.take, 100) : 30;
-
     const videos = await this.prisma.video.findMany({
       where: {
         status: "PUBLISHED",
@@ -78,32 +74,25 @@ export class RecommendationService {
       },
       take: take * 3,
     });
-
-    const rankedVideos = await Promise.all(
-      videos.map(async (video) => {
+    return videos
+      .map((video) => {
         const interestScore = this.estimateInterestScore({
           userEvents: video.feedEvents.map((event) => event.action),
         });
-
         const localityScore = this.calculateLocalityScore({
           videoRegion: video.region,
           videoCountry: video.country,
           userRegion: input.region,
           userCountry: input.country,
         });
-
         const freshnessScore = freshnessScoreFromDate(video.publishedAt);
-
         const engagementScore =
           video.score?.engagementScore ??
           this.estimateEngagementFromEvents(video.feedEvents.length);
-
         const qualityScore =
           video.score?.qualityScore ??
           (video.creator?.trustScore ? video.creator.trustScore / 100 : 0.75);
-
         const viralProbability = video.score?.viralProbability ?? 0.7;
-
         const baseRankScore = calculateRankScore({
           engagementScore,
           interestScore,
@@ -111,12 +100,10 @@ export class RecommendationService {
           freshnessScore,
           qualityScore,
         });
-
         const rankScore = this.applyViralBoost({
           baseRankScore,
           viralProbability,
         });
-
         return {
           id: video.id,
           title: video.title,
@@ -139,23 +126,17 @@ export class RecommendationService {
             viralProbability,
           },
         };
-      }),
-    );
-
-    return rankedVideos
+      })
       .sort((a, b) => b.rankScore - a.rankScore)
       .slice(0, take);
   }
-
   async createFeedEvent(input: CreateFeedEventRequest) {
     const video = await this.prisma.video.findUnique({
       where: { id: input.videoId },
     });
-
     if (!video) {
       throw new NotFoundException(`Video not found: ${input.videoId}`);
     }
-
     const event = await this.prisma.feedEvent.create({
       data: {
         userId: input.userId,
@@ -163,10 +144,9 @@ export class RecommendationService {
         action: input.action,
         watchMs: input.watchMs,
         region: input.region,
-        metadata: input.metadata as any,
+        metadata: input.metadata,
       },
     });
-
     await publishEvent(
       KafkaTopics.FEED_EVENT_CREATED,
       {
@@ -178,10 +158,8 @@ export class RecommendationService {
       },
       `${event.userId}:${event.videoId}`,
     );
-
     return event;
   }
-
   async getVideoById(id: string) {
     const video = await this.prisma.video.findUnique({
       where: { id },
@@ -191,24 +169,21 @@ export class RecommendationService {
         avatar: true,
         score: true,
         moderationLogs: true,
+        renderMetadata: true,
+        providerJobs: true,
       },
     });
-
     if (!video) {
       throw new NotFoundException(`Video not found: ${id}`);
     }
-
     return video;
   }
-
   private estimateInterestScore(input: { userEvents: string[] }): number {
     if (input.userEvents.length === 0) {
       return 0.72;
     }
-
     const positiveActions = ["like", "share", "comment", "save", "complete"];
     const negativeActions = ["skip"];
-
     let score = 0.72;
     for (const action of input.userEvents) {
       if (positiveActions.includes(action)) {
@@ -220,7 +195,6 @@ export class RecommendationService {
     }
     return this.clamp(score);
   }
-
   private calculateLocalityScore(input: {
     videoRegion: string | null;
     videoCountry: string | null;
@@ -238,14 +212,12 @@ export class RecommendationService {
     }
     return 0.5;
   }
-
   private estimateEngagementFromEvents(eventCount: number): number {
     if (eventCount >= 20) return 0.9;
     if (eventCount >= 10) return 0.82;
     if (eventCount >= 5) return 0.76;
     return 0.7;
   }
-
   private applyViralBoost(input: {
     baseRankScore: number;
     viralProbability: number;
@@ -253,7 +225,6 @@ export class RecommendationService {
     const boost = input.viralProbability * 0.12;
     return this.clamp(input.baseRankScore + boost);
   }
-
   private clamp(value: number): number {
     return Math.max(0, Math.min(1, value));
   }
