@@ -4,7 +4,13 @@ import '../data/video_model.dart';
 class VideoCard extends StatelessWidget {
   final VideoModel video;
   final VoidCallback? onComplete;
-  const VideoCard({super.key, required this.video, this.onComplete});
+
+  const VideoCard({
+    super.key,
+    required this.video,
+    this.onComplete,
+  });
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -36,17 +42,27 @@ class VideoCard extends StatelessWidget {
                 children: [
                   Text(
                     video.category.toUpperCase(),
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     video.title,
-                    style: const TextStyle(color: Colors.white, fontSize: 18),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                    ),
                   ),
                   const SizedBox(height: 8),
+                  // ✅ Updated: Display Rank and Viral scores
                   Text(
-                    '${video.region ?? 'Global'} • Score ${video.rankScore}',
-                    style: const TextStyle(color: Colors.white54, fontSize: 13),
+                    '${video.region ?? 'Global'} • Rank ${video.rankScore} • Viral ${video.viralProbability}',
+                    style: const TextStyle(
+                      color: Colors.white54,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
