@@ -9,12 +9,14 @@ import {
   RenderVideoRequest,
 } from "../../../contracts/api-contracts";
 import { ProviderJobQueryService } from "../../shared/provider-job-query.service";
+import { ScriptProviderQueryService } from "../../shared/script-provider-query.service";
 
 @Controller()
 export class GatewayController {
   constructor(
     private readonly gatewayService: GatewayService,
     private readonly providerJobQueryService: ProviderJobQueryService,
+    private readonly scriptProviderQueryService: ScriptProviderQueryService,
   ) {}
 
   @Get("health")
@@ -145,7 +147,7 @@ export class GatewayController {
     return this.gatewayService.runSeedPipeline(take || "10");
   }
 
-  // ✅ NEW: Provider Job Audit Routes
+  // ✅ Provider Job Audit Routes (from Batch 18)
   @Get("provider-jobs")
   async listProviderJobs(
     @Query("videoId") videoId?: string,
@@ -196,6 +198,54 @@ export class GatewayController {
     return {
       success: true,
       data: job,
+    };
+  }
+
+  // ✅ NEW: Script Provider Log Routes (Batch 20)
+  @Get("script-provider-logs")
+  async listScriptProviderLogs(
+    @Query("scriptId") scriptId?: string,
+    @Query("trendId") trendId?: string,
+    @Query("providerName") providerName?: string,
+    @Query("status")
+    status?: "PENDING" | "RUNNING" | "SUCCESS" | "FAILED" | "FALLBACK_USED",
+    @Query("fallbackUsed") fallbackUsed?: string,
+    @Query("take") take?: string,
+  ) {
+    const logs = await this.scriptProviderQueryService.listLogs({
+      scriptId,
+      trendId,
+      providerName,
+      status,
+      fallbackUsed:
+        fallbackUsed === undefined ? undefined : fallbackUsed === "true",
+      take: take ? Number(take) : undefined,
+    });
+
+    return {
+      success: true,
+      data: logs,
+      meta: {
+        count: logs.length,
+      },
+    };
+  }
+
+  @Get("script-provider-logs/summary")
+  async getScriptProviderLogSummary() {
+    const summary = await this.scriptProviderQueryService.getSummary();
+    return {
+      success: true,
+      data: summary,
+    };
+  }
+
+  @Get("script-provider-logs/:id")
+  async getScriptProviderLog(@Param("id") id: string) {
+    const log = await this.scriptProviderQueryService.getLog(id);
+    return {
+      success: true,
+      data: log,
     };
   }
 }
