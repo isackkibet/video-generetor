@@ -75,6 +75,50 @@ export class RenderService {
       },
     });
 
+    // ✅ NEW: Extract and persist viral score from script metadata
+    const viralScore = this.extractViralScoreFromScriptMetadata(
+      script.metadata,
+    );
+
+    if (viralScore) {
+      await this.prisma.videoScore.upsert({
+        where: {
+          videoId: video.id,
+        },
+        create: {
+          videoId: video.id,
+          viralProbability: viralScore.viralProbability,
+          engagementScore: viralScore.engagementScore,
+          watchTimeScore: viralScore.watchTimeScore,
+          shareScore: viralScore.shareScore,
+          commentScore: viralScore.commentScore,
+          qualityScore: viralScore.qualityScore,
+        },
+        update: {
+          viralProbability: viralScore.viralProbability,
+          engagementScore: viralScore.engagementScore,
+          watchTimeScore: viralScore.watchTimeScore,
+          shareScore: viralScore.shareScore,
+          commentScore: viralScore.commentScore,
+          qualityScore: viralScore.qualityScore,
+        },
+      });
+
+      await publishEvent(
+        KafkaTopics.VIDEO_SCORED,
+        {
+          videoId: video.id,
+          viralProbability: viralScore.viralProbability,
+          engagementScore: viralScore.engagementScore,
+          watchTimeScore: viralScore.watchTimeScore,
+          shareScore: viralScore.shareScore,
+          commentScore: viralScore.commentScore,
+          qualityScore: viralScore.qualityScore,
+        },
+        video.id,
+      );
+    }
+
     await publishEvent(
       KafkaTopics.VIDEO_RENDER_REQUESTED,
       {
@@ -150,7 +194,6 @@ export class RenderService {
         backgroundStyle: this.resolveBackgroundStyle(video.category),
       });
 
-      // ✅ Updated: Persist RenderMetadata on successful render
       const updated = await this.prisma.video.update({
         where: { id: video.id },
         data: {
@@ -324,7 +367,6 @@ export class RenderService {
       process.env.ALLOW_RENDER_FALLBACK === "true" ||
       env.videoRenderProvider === "mock";
 
-    // ✅ Updated: Persist renderMetadata on failure with no fallback
     if (!shouldUseMockFallback) {
       const failed = await this.prisma.video.update({
         where: { id: input.videoId },
@@ -364,7 +406,6 @@ export class RenderService {
       };
     }
 
-    // ✅ Updated: Persist renderMetadata on fallback
     const fallbackVideoUrl = `${env.cdnBaseUrl}/videos/${input.videoId}.mp4`;
     const fallbackThumbnailUrl = `${env.cdnBaseUrl}/thumbnails/${input.videoId}.jpg`;
 
@@ -428,6 +469,41 @@ export class RenderService {
         renderProvider: env.videoRenderProvider,
         safeFailure: true,
       },
+    };
+  }
+
+  // ✅ NEW: Extract viral score from script metadata
+  private extractViralScoreFromScriptMetadata(metadata: unknown): {
+    viralProbability: number;
+    engagementScore: number;
+    watchTimeScore: number;
+    shareScore: number;
+    commentScore: number;
+    qualityScore: number;
+  } | null {
+    if (!metadata || typeof metadata !== "object") {
+      return null;
+    }
+    const meta = metadata as {
+      viralScore?: {
+        viralProbability?: number;
+        engagementScore?: number;
+        watchTimeScore?: number;
+        shareScore?: number;
+        commentScore?: number;
+        qualityScore?: number;
+      };
+    };
+    if (!meta.viralScore) {
+      return null;
+    }
+    return {
+      viralProbability: Number(meta.viralScore.viralProbability || 0.7),
+      engagementScore: Number(meta.viralScore.engagementScore || 0.7),
+      watchTimeScore: Number(meta.viralScore.watchTimeScore || 0.7),
+      shareScore: Number(meta.viralScore.shareScore || 0.7),
+      commentScore: Number(meta.viralScore.commentScore || 0.7),
+      qualityScore: Number(meta.viralScore.qualityScore || 0.7),
     };
   }
 
