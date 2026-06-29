@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-
+import jwt from "jsonwebtoken";
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-
-  // Allow login page
-  if (pathname.startsWith("/login")) {
+  if (pathname.startsWith("/login") || pathname.startsWith("/api/auth/login")) {
     return NextResponse.next();
   }
-
   const cookieName = process.env.ADMIN_SESSION_COOKIE || "yohpal_admin_session";
-  const session = request.cookies.get(cookieName);
-
-  if (!session) {
+  const token = request.cookies.get(cookieName)?.value;
+  if (!token) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
-
-  return NextResponse.next();
+  try {
+    jwt.verify(token, process.env.ADMIN_JWT_SECRET || "dev-secret");
+    return NextResponse.next();
+  } catch {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
 }
-
 export const config = {
   matcher: [
     "/",
@@ -28,5 +27,6 @@ export const config = {
     "/provider-jobs/:path*",
     "/script-provider-logs/:path*",
     "/feed-diagnostics/:path*",
+    "/api/admin/:path*",
   ],
 };
