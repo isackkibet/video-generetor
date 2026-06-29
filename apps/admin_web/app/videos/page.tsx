@@ -1,4 +1,5 @@
 import { apiGet, apiPost, ApiResponse } from "../../lib/api";
+
 type Video = {
   id: string;
   title: string;
@@ -25,6 +26,7 @@ type Video = {
     failureReason?: string;
   };
 };
+
 async function getVideos() {
   try {
     const response = await apiGet<ApiResponse<Video[]>>(
@@ -35,16 +37,24 @@ async function getVideos() {
     return [];
   }
 }
+
 export default async function VideosPage() {
   const videos = await getVideos();
+
   async function createPendingJobs() {
     "use server";
+    const { requireActionPermission } = await import("../../lib/action-guard");
+    await requireActionPermission("GENERATE");
     await apiPost("/render/jobs/create-pending?take=20");
   }
+
   async function renderPendingVideos() {
     "use server";
+    const { requireActionPermission } = await import("../../lib/action-guard");
+    await requireActionPermission("GENERATE");
     await apiPost("/render/videos/render-pending?take=20");
   }
+
   return (
     <>
       <section className="header">
@@ -54,6 +64,7 @@ export default async function VideosPage() {
           status.
         </p>
       </section>
+
       <div className="actions">
         <form action={createPendingJobs}>
           <button type="submit">Create pending jobs</button>
@@ -64,6 +75,7 @@ export default async function VideosPage() {
           </button>
         </form>
       </div>
+
       <section className="card">
         <table className="table">
           <thead>
