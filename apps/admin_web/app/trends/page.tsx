@@ -26,6 +26,8 @@ export default async function TrendsPage() {
 
   async function discoverSeedTrends() {
     "use server";
+    const { requireActionPermission } = await import("../../lib/action-guard");
+    await requireActionPermission("GENERATE");
     await apiPost("/trends/discover-seed");
   }
 
