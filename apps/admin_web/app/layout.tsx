@@ -57,6 +57,7 @@ export default function RootLayout({
               <Link href="/provider-jobs">Provider Jobs</Link>
               <Link href="/script-provider-logs">Script Provider Logs</Link>
               <Link href="/feed-diagnostics">Feed Diagnostics</Link>
+              <Link href="/admin-users">Admin Users</Link>
             </nav>
           </aside>
           <main className="main">{children}</main>
