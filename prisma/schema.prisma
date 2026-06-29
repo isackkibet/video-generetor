@@ -283,6 +283,18 @@ model ScriptProviderLog {
  @@index([startedAt])
 }
 
+model UserInterestProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  categoryScores Json
+  regionScores   Json?
+  lastUpdatedAt  DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+}
+
 enum VideoStatus {
   DRAFT
   SCRIPTED
