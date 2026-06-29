@@ -1,5 +1,9 @@
 import { PrismaClient } from "@prisma/client";
+// ✅ Added: bcrypt import
+import * as bcrypt from "bcryptjs";
+
 const prisma = new PrismaClient();
+
 async function seedCreators() {
   const creator = await prisma.creator.upsert({
     where: { username: "yohpal_ai_studio" },
@@ -14,6 +18,7 @@ async function seedCreators() {
       isAiCreator: true,
     },
   });
+
   await prisma.creatorTwin.upsert({
     where: { creatorId: creator.id },
     update: {
@@ -60,8 +65,10 @@ async function seedCreators() {
       },
     },
   });
+
   return creator;
 }
+
 async function seedAvatars() {
   await prisma.avatar.createMany({
     skipDuplicates: true,
@@ -109,6 +116,7 @@ async function seedAvatars() {
     ],
   });
 }
+
 async function seedTrends() {
   await prisma.trend.createMany({
     data: [
@@ -167,6 +175,7 @@ async function seedTrends() {
     ],
   });
 }
+
 async function seedAdCampaigns() {
   await prisma.adCampaign.createMany({
     data: [
@@ -195,15 +204,37 @@ async function seedAdCampaigns() {
     ],
   });
 }
+
+// ✅ NEW: Seed super admin
+async function seedSuperAdmin() {
+  const passwordHash = await bcrypt.hash("ChangeMe123!", 12);
+
+  await prisma.adminUser.upsert({
+    where: { email: "admin@yohpal.com" },
+    update: {},
+    create: {
+      email: "admin@yohpal.com",
+      name: "YohPal Super Admin",
+      passwordHash,
+      role: "SUPER_ADMIN",
+      isActive: true,
+    },
+  });
+
+  console.log("✅ Super admin created: admin@yohpal.com / ChangeMe123!");
+}
+
 async function main() {
   console.log("Starting YohPal Live AI Content Factory seed...");
   const creator = await seedCreators();
   await seedAvatars();
   await seedTrends();
   await seedAdCampaigns();
+  await seedSuperAdmin(); // ✅ Added
   console.log("Seed complete.");
   console.log(`Default AI creator: ${creator.username}`);
 }
+
 main()
   .catch((error) => {
     console.error("Seed failed:", error);
