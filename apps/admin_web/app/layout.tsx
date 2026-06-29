@@ -1,6 +1,5 @@
 import Link from "next/link";
 import "./styles.css";
-// ✅ Added: Import getAdminSession
 import { getAdminSession } from "../lib/auth";
 
 export const metadata = {
@@ -13,7 +12,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // ✅ Added: Get session
   const session = getAdminSession();
 
   return (
@@ -29,13 +27,25 @@ export default function RootLayout({
               </div>
             </div>
 
-            {/* ✅ Added: Display session info if logged in */}
             {session && (
               <div className="card" style={{ marginBottom: 20 }}>
                 <strong>{session.name}</strong>
                 <br />
                 <span>{session.role}</span>
               </div>
+            )}
+
+            {/* ✅ Added: Logout button */}
+            {session && (
+              <form
+                action="/api/auth/logout"
+                method="post"
+                style={{ marginBottom: 20 }}
+              >
+                <button type="submit" className="secondary">
+                  Logout
+                </button>
+              </form>
             )}
 
             <nav>
