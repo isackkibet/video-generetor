@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { getAdminFromCookie } from "./session";
 
 export type AdminRole =
   | "SUPER_ADMIN"
@@ -7,31 +7,21 @@ export type AdminRole =
   | "VIEWER";
 
 export type AdminSession = {
+  id: string;
   email: string;
   name: string;
   role: AdminRole;
 };
 
 export function getAdminSession(): AdminSession | null {
-  const cookieName = process.env.ADMIN_SESSION_COOKIE || "yohpal_admin_session";
-  const value = cookies().get(cookieName)?.value;
-
-  if (!value) return null;
-
-  try {
-    return JSON.parse(Buffer.from(value, "base64").toString("utf8"));
-  } catch {
-    return null;
-  }
+  return getAdminFromCookie();
 }
 
 export function requireAdminSession() {
   const session = getAdminSession();
-
   if (!session) {
     throw new Error("UNAUTHORIZED");
   }
-
   return session;
 }
 
@@ -45,6 +35,5 @@ export function canAccess(
     MODERATOR: ["VIEW", "MODERATE", "PUBLISH"],
     VIEWER: ["VIEW"],
   };
-
   return matrix[role].includes(permission);
 }
