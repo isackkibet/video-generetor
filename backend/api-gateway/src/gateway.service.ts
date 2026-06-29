@@ -8,6 +8,8 @@ import {
   ModerateVideoRequest,
   RenderVideoRequest,
 } from "../../../contracts/api-contracts";
+// ✅ Added: Service auth headers
+import { serviceAuthHeaders } from "../../shared/service-auth";
 
 @Injectable()
 export class GatewayService {
@@ -130,7 +132,6 @@ export class GatewayService {
     return this.post(`${this.recommendationServiceUrl}/feed/events`, body);
   }
 
-  // ✅ NEW: Feed diagnostics endpoint
   async getUserFeedDiagnostics(userId: string) {
     return this.get(
       `${this.recommendationServiceUrl}/feed/diagnostics/${userId}`,
@@ -158,13 +159,23 @@ export class GatewayService {
     };
   }
 
+  // ✅ Updated: Added serviceAuthHeaders to requests
   private async get(url: string, params?: Record<string, unknown>) {
-    const response = await axios.get(url, { params });
+    const response = await axios.get(url, {
+      params,
+      headers: serviceAuthHeaders(),
+    });
     return response.data;
   }
 
   private async post(url: string, body: unknown, config?: AxiosRequestConfig) {
-    const response = await axios.post(url, body, config);
+    const response = await axios.post(url, body, {
+      ...(config || {}),
+      headers: {
+        ...(config?.headers || {}),
+        ...serviceAuthHeaders(),
+      },
+    });
     return response.data;
   }
 }
