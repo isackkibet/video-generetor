@@ -1,16 +1,25 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
-
+const API_KEY = process.env.ADMIN_TO_API_GATEWAY_KEY || "";
+function authHeaders() {
+  return API_KEY
+    ? {
+        "X-API-Key": API_KEY,
+      }
+    : {};
+}
 export async function apiGet<T>(path: string): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     cache: "no-store",
+    headers: {
+      ...authHeaders(),
+    },
   });
   if (!response.ok) {
     throw new Error(`GET ${path} failed`);
   }
   return response.json();
 }
-
 export async function apiPost<T>(
   path: string,
   body: Record<string, unknown> = {},
@@ -19,6 +28,7 @@ export async function apiPost<T>(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders(),
     },
     body: JSON.stringify(body),
     cache: "no-store",
@@ -28,7 +38,6 @@ export async function apiPost<T>(
   }
   return response.json();
 }
-
 export type ApiResponse<T> = {
   success: boolean;
   data: T;
