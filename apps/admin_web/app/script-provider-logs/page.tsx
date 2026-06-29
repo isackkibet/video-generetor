@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { apiGet, ApiResponse } from "../../lib/api";
+// ✅ Added: Auth imports
+import { requireAdminSession, canAccess } from "../../lib/auth";
+
 type ScriptProviderLog = {
   id: string;
   providerName: string;
@@ -22,6 +25,7 @@ type ScriptProviderLog = {
     country?: string;
   };
 };
+
 type ScriptProviderSummary = {
   total: number;
   success: number;
@@ -29,6 +33,7 @@ type ScriptProviderSummary = {
   fallback: number;
   running: number;
 };
+
 async function getLogs(
   searchParams: Record<string, string | string[] | undefined>,
 ) {
@@ -41,6 +46,7 @@ async function getLogs(
   if (!query.has("take")) {
     query.set("take", "100");
   }
+
   try {
     const response = await apiGet<ApiResponse<ScriptProviderLog[]>>(
       `/script-provider-logs?${query.toString()}`,
@@ -50,6 +56,7 @@ async function getLogs(
     return [];
   }
 }
+
 async function getSummary() {
   try {
     const response = await apiGet<ApiResponse<ScriptProviderSummary>>(
@@ -66,15 +73,30 @@ async function getSummary() {
     };
   }
 }
+
 export default async function ScriptProviderLogsPage({
   searchParams,
 }: {
   searchParams: Record<string, string | string[] | undefined>;
 }) {
+  // ✅ Added: Admin access check
+  const session = requireAdminSession();
+  if (!canAccess(session.role, "ADMIN")) {
+    return (
+      <>
+        <section className="header">
+          <h1>Access Denied</h1>
+          <p>Only super admins can view script provider audit logs.</p>
+        </section>
+      </>
+    );
+  }
+
   const [logs, summary] = await Promise.all([
     getLogs(searchParams),
     getSummary(),
   ]);
+
   return (
     <>
       <section className="header">
@@ -84,6 +106,7 @@ export default async function ScriptProviderLogsPage({
           and script-level results.
         </p>
       </section>
+
       <section className="grid cols-4">
         <div className="card">
           <h3>Total</h3>
@@ -102,6 +125,7 @@ export default async function ScriptProviderLogsPage({
           <div className="statValue">{summary.fallback}</div>
         </div>
       </section>
+
       <section className="card" style={{ marginTop: 20 }}>
         <h3>Filters</h3>
         <form className="actions">
@@ -116,6 +140,7 @@ export default async function ScriptProviderLogsPage({
             <option value="FAILED">Failed</option>
             <option value="FALLBACK_USED">Fallback Used</option>
           </select>
+
           <select
             name="fallbackUsed"
             defaultValue={(searchParams.fallbackUsed as string) || ""}
@@ -124,19 +149,23 @@ export default async function ScriptProviderLogsPage({
             <option value="true">Fallback only</option>
             <option value="false">No fallback</option>
           </select>
+
           <input
             name="providerName"
             placeholder="Provider name"
             defaultValue={(searchParams.providerName as string) || ""}
           />
+
           <input
             name="scriptId"
             placeholder="Script ID"
             defaultValue={(searchParams.scriptId as string) || ""}
           />
+
           <button type="submit">Apply filters</button>
         </form>
       </section>
+
       <section className="card" style={{ marginTop: 20 }}>
         <table className="table">
           <thead>
