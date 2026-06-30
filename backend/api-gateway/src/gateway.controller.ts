@@ -249,9 +249,15 @@ export class GatewayController {
     };
   }
 
-  // ✅ NEW: Feed Diagnostics Route (Batch 22)
+  // ✅ Feed Diagnostics Route (Batch 22)
   @Get("feed/diagnostics/:userId")
   async getUserFeedDiagnostics(@Param("userId") userId: string) {
     return this.gatewayService.getUserFeedDiagnostics(userId);
+  }
+
+  // ✅ NEW: Service Status Route (Batch 29)
+  @Get("observability/services")
+  async serviceStatus() {
+    return this.gatewayService.serviceStatus();
   }
 }
