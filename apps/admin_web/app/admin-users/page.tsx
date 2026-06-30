@@ -8,6 +8,8 @@ import {
   reactivateAdminUser,
   resetAdminPassword,
 } from "../../lib/admin-actions";
+// ✅ Added: FlashMessage import
+import { FlashMessage } from "../../components/FlashMessage";
 
 const prisma = new PrismaClient();
 const roles: AdminRole[] = [
@@ -17,7 +19,12 @@ const roles: AdminRole[] = [
   "VIEWER",
 ];
 
-export default async function AdminUsersPage() {
+// ✅ Updated: Added searchParams prop
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: { success?: string; error?: string };
+}) {
   const session = requireAdminSession();
 
   if (!canAccess(session.role, "ADMIN")) {
@@ -49,6 +56,9 @@ export default async function AdminUsersPage() {
           <a href="/admin-audit-logs">View admin audit logs</a>
         </p>
       </section>
+
+      {/* ✅ Added: FlashMessage for success/error feedback */}
+      <FlashMessage success={searchParams.success} error={searchParams.error} />
 
       <section className="card">
         <h3>Create Admin User</h3>
