@@ -10,6 +10,8 @@ import {
 } from "../../../contracts/api-contracts";
 import { ProviderJobQueryService } from "../../shared/provider-job-query.service";
 import { ScriptProviderQueryService } from "../../shared/script-provider-query.service";
+// ✅ Added: ObservabilityQueryService import
+import { ObservabilityQueryService } from "../../shared/observability-query.service";
 
 @Controller()
 export class GatewayController {
@@ -17,6 +19,8 @@ export class GatewayController {
     private readonly gatewayService: GatewayService,
     private readonly providerJobQueryService: ProviderJobQueryService,
     private readonly scriptProviderQueryService: ScriptProviderQueryService,
+    // ✅ Added: ObservabilityQueryService
+    private readonly observabilityQueryService: ObservabilityQueryService,
   ) {}
 
   @Get("health")
@@ -255,9 +259,29 @@ export class GatewayController {
     return this.gatewayService.getUserFeedDiagnostics(userId);
   }
 
-  // ✅ NEW: Service Status Route (Batch 29)
+  // ✅ Service Status Route (Batch 29)
   @Get("observability/services")
   async serviceStatus() {
     return this.gatewayService.serviceStatus();
+  }
+
+  // ✅ NEW: Provider Failures Route (Batch 29)
+  @Get("observability/provider-failures")
+  async providerFailureSummary() {
+    const data = await this.observabilityQueryService.providerFailureSummary();
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  // ✅ NEW: Pipeline Summary Route (Batch 29)
+  @Get("observability/pipeline-summary")
+  async pipelineSummary() {
+    const data = await this.observabilityQueryService.contentPipelineSummary();
+    return {
+      success: true,
+      data,
+    };
   }
 }
