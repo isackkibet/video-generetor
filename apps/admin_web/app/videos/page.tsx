@@ -1,4 +1,10 @@
-import { apiGet, apiPost, ApiResponse } from "../../lib/api";
+import { apiGet, ApiResponse } from "../../lib/api";
+// ✅ Added: FlashMessage and pipeline action imports
+import { FlashMessage } from "../../components/FlashMessage";
+import {
+  createPendingRenderJobsAction,
+  renderPendingVideosAction,
+} from "../../lib/pipeline-actions";
 
 type Video = {
   id: string;
@@ -38,22 +44,13 @@ async function getVideos() {
   }
 }
 
-export default async function VideosPage() {
+// ✅ Updated: Added searchParams prop
+export default async function VideosPage({
+  searchParams,
+}: {
+  searchParams: { success?: string; error?: string };
+}) {
   const videos = await getVideos();
-
-  async function createPendingJobs() {
-    "use server";
-    const { requireActionPermission } = await import("../../lib/action-guard");
-    await requireActionPermission("GENERATE");
-    await apiPost("/render/jobs/create-pending?take=20");
-  }
-
-  async function renderPendingVideos() {
-    "use server";
-    const { requireActionPermission } = await import("../../lib/action-guard");
-    await requireActionPermission("GENERATE");
-    await apiPost("/render/videos/render-pending?take=20");
-  }
 
   return (
     <>
@@ -65,11 +62,15 @@ export default async function VideosPage() {
         </p>
       </section>
 
+      {/* ✅ Added: FlashMessage for success/error feedback */}
+      <FlashMessage success={searchParams.success} error={searchParams.error} />
+
       <div className="actions">
-        <form action={createPendingJobs}>
+        {/* ✅ Updated: Using pipeline actions instead of inline actions */}
+        <form action={createPendingRenderJobsAction}>
           <button type="submit">Create pending jobs</button>
         </form>
-        <form action={renderPendingVideos}>
+        <form action={renderPendingVideosAction}>
           <button type="submit" className="secondary">
             Render pending videos
           </button>
