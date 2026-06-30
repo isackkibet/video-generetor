@@ -8,7 +8,6 @@ import {
   ModerateVideoRequest,
   RenderVideoRequest,
 } from "../../../contracts/api-contracts";
-// ✅ Added: Service auth headers
 import { serviceAuthHeaders } from "../../shared/service-auth";
 
 @Injectable()
@@ -156,6 +155,49 @@ export class GatewayService {
         moderation,
         published,
       },
+    };
+  }
+
+  // ✅ NEW: Service status aggregation method
+  async serviceStatus() {
+    const services = [
+      { name: "trend-service", url: this.trendServiceUrl },
+      { name: "script-service", url: this.scriptServiceUrl },
+      { name: "render-service", url: this.renderServiceUrl },
+      { name: "moderation-service", url: this.moderationServiceUrl },
+      { name: "recommendation-service", url: this.recommendationServiceUrl },
+    ];
+
+    const results = await Promise.all(
+      services.map(async (service) => {
+        const startedAt = Date.now();
+        try {
+          const response = await axios.get(`${service.url}/health`, {
+            timeout: 5000,
+            headers: serviceAuthHeaders(),
+          });
+          return {
+            name: service.name,
+            status: "ok",
+            latencyMs: Date.now() - startedAt,
+            data: response.data,
+          };
+        } catch (error) {
+          return {
+            name: service.name,
+            status: "down",
+            latencyMs: Date.now() - startedAt,
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+        }
+      }),
+    );
+
+    return {
+      service: "api-gateway",
+      status: results.every((item) => item.status === "ok") ? "ok" : "degraded",
+      timestamp: new Date().toISOString(),
+      services: results,
     };
   }
 
