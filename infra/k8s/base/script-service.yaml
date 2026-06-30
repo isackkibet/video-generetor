@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: script-service
+  namespace: yohpal-live
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: script-service
+  template:
+    metadata:
+      labels:
+        app: script-service
+    spec:
+      containers:
+      - name: script-service
+        image: registry.yohpal.com/yohpal-live/script-service:latest
+        ports:
+        - containerPort: 3002
+        envFrom:
+        - configMapRef:
+            name: yohpal-live-config
+        - secretRef:
+            name: yohpal-live-secrets
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: script-service
+  namespace: yohpal-live
+spec:
+  selector:
+    app: script-service
+  ports:
+  - port: 3002
+    targetPort: 3002

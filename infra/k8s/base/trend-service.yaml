@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trend-service
+  namespace: yohpal-live
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: trend-service
+  template:
+    metadata:
+      labels:
+        app: trend-service
+    spec:
+      containers:
+      - name: trend-service
+        image: registry.yohpal.com/yohpal-live/trend-service:latest
+        ports:
+        - containerPort: 3001
+        envFrom:
+        - configMapRef:
+            name: yohpal-live-config
+        - secretRef:
+            name: yohpal-live-secrets
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trend-service
+  namespace: yohpal-live
+spec:
+  selector:
+    app: trend-service
+  ports:
+  - port: 3001
+    targetPort: 3001

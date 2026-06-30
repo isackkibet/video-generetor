@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: yohpal-live-ingress
+  namespace: yohpal-live
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - live.yohpal.com
+    secretName: yohpal-live-tls
+  rules:
+  - host: live.yohpal.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: api-gateway
+            port:
+              number: 3000

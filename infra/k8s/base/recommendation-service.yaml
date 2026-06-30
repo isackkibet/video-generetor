@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recommendation-service
+  namespace: yohpal-live
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: recommendation-service
+  template:
+    metadata:
+      labels:
+        app: recommendation-service
+    spec:
+      containers:
+      - name: recommendation-service
+        image: registry.yohpal.com/yohpal-live/recommendation-service:latest
+        ports:
+        - containerPort: 3005
+        envFrom:
+        - configMapRef:
+            name: yohpal-live-config
+        - secretRef:
+            name: yohpal-live-secrets
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: recommendation-service
+  namespace: yohpal-live
+spec:
+  selector:
+    app: recommendation-service
+  ports:
+  - port: 3005
+    targetPort: 3005

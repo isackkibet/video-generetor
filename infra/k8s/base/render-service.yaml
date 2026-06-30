@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: render-service
+  namespace: yohpal-live
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: render-service
+  template:
+    metadata:
+      labels:
+        app: render-service
+    spec:
+      containers:
+      - name: render-service
+        image: registry.yohpal.com/yohpal-live/render-service:latest
+        ports:
+        - containerPort: 3003
+        envFrom:
+        - configMapRef:
+            name: yohpal-live-config
+        - secretRef:
+            name: yohpal-live-secrets
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: render-service
+  namespace: yohpal-live
+spec:
+  selector:
+    app: render-service
+  ports:
+  - port: 3003
+    targetPort: 3003
