@@ -1,4 +1,10 @@
-import { apiGet, apiPost, ApiResponse } from "../../lib/api";
+import { apiGet, ApiResponse } from "../../lib/api";
+// ✅ Added: FlashMessage and pipeline action imports
+import { FlashMessage } from "../../components/FlashMessage";
+import {
+  moderatePendingVideosAction,
+  publishApprovedVideosAction,
+} from "../../lib/pipeline-actions";
 
 type ModerationLog = {
   id: string;
@@ -28,22 +34,13 @@ async function getModerationQueue() {
   }
 }
 
-export default async function ModerationPage() {
+// ✅ Updated: Added searchParams prop
+export default async function ModerationPage({
+  searchParams,
+}: {
+  searchParams: { success?: string; error?: string };
+}) {
   const queue = await getModerationQueue();
-
-  async function moderatePending() {
-    "use server";
-    const { requireActionPermission } = await import("../../lib/action-guard");
-    await requireActionPermission("MODERATE");
-    await apiPost("/moderation/videos/moderate-pending?take=20");
-  }
-
-  async function publishApproved() {
-    "use server";
-    const { requireActionPermission } = await import("../../lib/action-guard");
-    await requireActionPermission("PUBLISH");
-    await apiPost("/moderation/videos/publish-approved?take=20");
-  }
 
   return (
     <>
@@ -55,11 +52,15 @@ export default async function ModerationPage() {
         </p>
       </section>
 
+      {/* ✅ Added: FlashMessage for success/error feedback */}
+      <FlashMessage success={searchParams.success} error={searchParams.error} />
+
       <div className="actions">
-        <form action={moderatePending}>
+        {/* ✅ Updated: Using pipeline actions instead of inline actions */}
+        <form action={moderatePendingVideosAction}>
           <button type="submit">Moderate pending</button>
         </form>
-        <form action={publishApproved}>
+        <form action={publishApprovedVideosAction}>
           <button type="submit" className="secondary">
             Publish approved
           </button>
