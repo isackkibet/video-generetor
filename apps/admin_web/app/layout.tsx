@@ -54,10 +54,11 @@ export default function RootLayout({
               <Link href="/scripts">Scripts</Link>
               <Link href="/videos">Videos</Link>
               <Link href="/moderation">Moderation</Link>
+              <Link href="/feed-diagnostics">Feed Diagnostics</Link>
               <Link href="/provider-jobs">Provider Jobs</Link>
               <Link href="/script-provider-logs">Script Provider Logs</Link>
-              <Link href="/feed-diagnostics">Feed Diagnostics</Link>
               <Link href="/admin-users">Admin Users</Link>
+              <Link href="/admin-audit-logs">Admin Audit Logs</Link>
             </nav>
           </aside>
           <main className="main">{children}</main>
