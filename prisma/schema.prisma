@@ -294,6 +294,19 @@ model UserInterestProfile {
 
   @@index([userId])
 }
+model AdminAuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  action     String
+  targetId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([targetId])
+  @@index([action])
+  @@index([createdAt])
+}
 
 enum VideoStatus {
   DRAFT
