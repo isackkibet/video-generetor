@@ -8,6 +8,7 @@ import {
   reactivateAdminUser,
   resetAdminPassword,
 } from "../../lib/admin-actions";
+
 const prisma = new PrismaClient();
 const roles: AdminRole[] = [
   "SUPER_ADMIN",
@@ -15,8 +16,10 @@ const roles: AdminRole[] = [
   "MODERATOR",
   "VIEWER",
 ];
+
 export default async function AdminUsersPage() {
   const session = requireAdminSession();
+
   if (!canAccess(session.role, "ADMIN")) {
     return (
       <>
@@ -27,11 +30,13 @@ export default async function AdminUsersPage() {
       </>
     );
   }
+
   const users = await prisma.adminUser.findMany({
     orderBy: {
       createdAt: "desc",
     },
   });
+
   return (
     <>
       <section className="header">
@@ -39,7 +44,12 @@ export default async function AdminUsersPage() {
         <p>
           Create admins, change roles, deactivate users, and reset passwords.
         </p>
+        {/* ✅ Added: Link to admin audit logs */}
+        <p>
+          <a href="/admin-audit-logs">View admin audit logs</a>
+        </p>
       </section>
+
       <section className="card">
         <h3>Create Admin User</h3>
         <form action={createAdminUser} className="grid">
@@ -61,6 +71,7 @@ export default async function AdminUsersPage() {
           <button type="submit">Create Admin</button>
         </form>
       </section>
+
       <section className="card" style={{ marginTop: 20 }}>
         <h3>Existing Admins</h3>
         <table className="table">
