@@ -1,4 +1,7 @@
-import { apiGet, apiPost, ApiResponse } from "../../lib/api";
+import { apiGet, ApiResponse } from "../../lib/api";
+// ✅ Added: FlashMessage and pipeline action imports
+import { FlashMessage } from "../../components/FlashMessage";
+import { generatePendingScriptsAction } from "../../lib/pipeline-actions";
 
 type Script = {
   id: string;
@@ -36,15 +39,13 @@ async function getScripts() {
   }
 }
 
-export default async function ScriptsPage() {
+// ✅ Updated: Added searchParams prop
+export default async function ScriptsPage({
+  searchParams,
+}: {
+  searchParams: { success?: string; error?: string };
+}) {
   const scripts = await getScripts();
-
-  async function generatePendingScripts() {
-    "use server";
-    const { requireActionPermission } = await import("../../lib/action-guard");
-    await requireActionPermission("GENERATE");
-    await apiPost("/scripts/generate-pending?take=20");
-  }
 
   return (
     <>
@@ -53,7 +54,11 @@ export default async function ScriptsPage() {
         <p>Generate scripts and inspect LLM provider audit status.</p>
       </section>
 
-      <form action={generatePendingScripts} className="actions">
+      {/* ✅ Added: FlashMessage for success/error feedback */}
+      <FlashMessage success={searchParams.success} error={searchParams.error} />
+
+      {/* ✅ Updated: Using pipeline action instead of inline action */}
+      <form action={generatePendingScriptsAction} className="actions">
         <button type="submit">Generate pending scripts</button>
       </form>
 
