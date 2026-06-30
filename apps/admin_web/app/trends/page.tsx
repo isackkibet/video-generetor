@@ -1,4 +1,7 @@
-import { apiGet, apiPost, ApiResponse } from "../../lib/api";
+import { apiGet, ApiResponse } from "../../lib/api";
+// ✅ Added: FlashMessage and pipeline action imports
+import { FlashMessage } from "../../components/FlashMessage";
+import { discoverSeedTrendsAction } from "../../lib/pipeline-actions";
 
 type Trend = {
   id: string;
@@ -21,15 +24,13 @@ async function getTrends() {
   }
 }
 
-export default async function TrendsPage() {
+// ✅ Updated: Added searchParams prop
+export default async function TrendsPage({
+  searchParams,
+}: {
+  searchParams: { success?: string; error?: string };
+}) {
   const trends = await getTrends();
-
-  async function discoverSeedTrends() {
-    "use server";
-    const { requireActionPermission } = await import("../../lib/action-guard");
-    await requireActionPermission("GENERATE");
-    await apiPost("/trends/discover-seed");
-  }
 
   return (
     <>
@@ -41,7 +42,11 @@ export default async function TrendsPage() {
         </p>
       </section>
 
-      <form action={discoverSeedTrends} className="actions">
+      {/* ✅ Added: FlashMessage for success/error feedback */}
+      <FlashMessage success={searchParams.success} error={searchParams.error} />
+
+      {/* ✅ Updated: Using pipeline action instead of inline action */}
+      <form action={discoverSeedTrendsAction} className="actions">
         <button type="submit">Discover seed trends</button>
       </form>
 
