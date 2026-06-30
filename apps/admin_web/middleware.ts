@@ -35,6 +35,7 @@ export const config = {
     "/feed-diagnostics/:path*",
     "/admin-users/:path*",
     "/admin-audit-logs/:path*",
+    "/observability/:path*", // ✅ Added
     "/api/admin/:path*",
   ],
 };
