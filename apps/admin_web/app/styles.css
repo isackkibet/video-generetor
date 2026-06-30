@@ -184,3 +184,14 @@ select:focus,
 input:focus {
  border-color: #7c3aed;
 }
+
+.grid {
+ display: grid;
+ gap: 14px;
+}
+form.grid {
+ max-width: 520px;
+}
+.table .actions {
+ margin-bottom: 0;
+}
