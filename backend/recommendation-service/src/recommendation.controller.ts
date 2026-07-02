@@ -1,55 +1,48 @@
-import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
-import { RecommendationService } from "./recommendation.service";
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { ZodValidationPipe } from '../../shared/validation';
+import { validateQuery, validateParams } from '../../shared/query-validation';
+import { RecommendationService } from './recommendation.service';
 import {
-  CreateFeedEventRequest,
-  SeedFeedRequest,
-} from "../../../contracts/api-contracts";
-import { ok } from "../../shared/http-response";
+  seedFeedQuerySchema,
+  feedEventSchema,
+  userIdParamSchema,
+  idParamSchema,
+} from '../../../contracts/validation-schemas';
+import { CreateFeedEventRequest, SeedFeedRequest } from '../../../contracts/api-contracts';
+import { ok } from '../../shared/http-response';
 
 @Controller()
 export class RecommendationController {
   constructor(private readonly recommendationService: RecommendationService) {}
 
-  @Get("feed/seed")
-  async getSeedFeed(
-    @Query("userId") userId: string,
-    @Query("region") region?: string,
-    @Query("country") country?: string,
-    @Query("language") language?: string,
-    @Query("take") take?: string,
-  ) {
+  @Get('feed/seed')
+  async getSeedFeed(@Query() rawQuery: Record<string, string | undefined>) {
+    const query = validateQuery(seedFeedQuerySchema, rawQuery);
     const request: SeedFeedRequest = {
-      userId,
-      region,
-      country,
-      language,
-      take: take ? Number(take) : undefined,
+      userId: query.userId,
+      region: query.region,
+      country: query.country,
+      language: query.language,
+      take: query.take,
     };
     const feed = await this.recommendationService.getSeedFeed(request);
-    return ok(feed, {
-      count: feed.length,
-    });
+    return ok(feed, { count: feed.length });
   }
 
-  @Post("feed/events")
-  async createFeedEvent(@Body() body: CreateFeedEventRequest) {
-    const event = await this.recommendationService.createFeedEvent(body);
-    return ok(event, {
-      message: "Feed event recorded",
-    });
+  @Post('feed/events')
+  async createFeedEvent(@Body(new ZodValidationPipe(feedEventSchema)) body: CreateFeedEventRequest) {
+    return ok(await this.recommendationService.createFeedEvent(body));
   }
 
-  // ✅ NEW: Feed diagnostics endpoint
-  @Get("feed/diagnostics/:userId")
-  async getUserFeedDiagnostics(@Param("userId") userId: string) {
-    const result =
-      await this.recommendationService.getUserFeedDiagnostics(userId);
-    return ok(result);
+  @Get('feed/diagnostics/:userId')
+  async getUserFeedDiagnostics(@Param() rawParams: Record<string, string>) {
+    const params = validateParams(userIdParamSchema, rawParams);
+    return ok(await this.recommendationService.getUserFeedDiagnostics(params.userId));
   }
 
-  @Get("videos/:id")
-  async getVideoById(@Param("id") id: string) {
-    const video = await this.recommendationService.getVideoById(id);
-    return ok(video);
+  @Get('videos/:id')
+  async getVideoById(@Param() rawParams: Record<string, string>) {
+    const params = validateParams(idParamSchema, rawParams);
+    return ok(await this.recommendationService.getVideoById(params.id));
   }
 }

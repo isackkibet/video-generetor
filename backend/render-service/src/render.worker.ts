@@ -1,16 +1,8 @@
-import { z } from 'zod';
 import { KafkaTopics } from '../../../contracts/kafka-events';
 import { startKafkaWorker } from '../../shared/kafka-consumer-runner';
 import { PrismaService } from '../../shared/prisma.service';
 import { RenderService } from './render.service';
-
-const scriptCreatedEventSchema = z.object({
-  scriptId: z.string().uuid(),
-  trendId: z.string().uuid().nullable().optional(),
-  title: z.string(),
-  qualityScore: z.number(),
-  factScore: z.number(),
-});
+import { kafkaScriptCreatedSchema } from '../../../contracts/validation-schemas';
 
 export async function startRenderWorker() {
   const prisma = new PrismaService();
@@ -21,7 +13,7 @@ export async function startRenderWorker() {
     service: 'render-service',
     groupId: 'render-service-script-consumer',
     topics: [KafkaTopics.SCRIPT_CREATED],
-    parse: (raw) => scriptCreatedEventSchema.parse(JSON.parse(raw)),
+    parse: (raw) => kafkaScriptCreatedSchema.parse(JSON.parse(raw)),
     handle: async (event) => {
       const video = await service.createVideoJob({
         scriptId: event.scriptId,

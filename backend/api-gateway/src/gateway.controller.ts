@@ -1,4 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { ZodValidationPipe } from '../../shared/validation';
+import { validateParams, validateQuery } from '../../shared/query-validation';
 import { GatewayService } from './gateway.service';
 import { ProviderJobQueryService } from '../../shared/provider-job-query.service';
 import { ScriptProviderQueryService } from '../../shared/script-provider-query.service';
@@ -6,6 +8,23 @@ import { ObservabilityQueryService } from '../../shared/observability-query.serv
 import { AdminJwtGuard } from '../../shared/admin-jwt.guard';
 import { RolesGuard } from '../../shared/roles.guard';
 import { Roles } from '../../shared/roles.decorator';
+import {
+  createTrendSchema,
+  generateScriptSchema,
+  createVideoJobSchema,
+  renderVideoSchema,
+  moderateVideoSchema,
+  feedEventSchema,
+  listTrendsQuerySchema,
+  listScriptsQuerySchema,
+  listVideosQuerySchema,
+  moderationQueueQuerySchema,
+  seedFeedQuerySchema,
+  userIdParamSchema,
+  idParamSchema,
+  providerJobsQuerySchema,
+  scriptProviderLogsQuerySchema,
+} from '../../../contracts/validation-schemas';
 import {
   CreateFeedEventRequest,
   CreateTrendRequest,
@@ -24,7 +43,7 @@ export class GatewayController {
     private readonly observabilityQueryService: ObservabilityQueryService,
   ) {}
 
-  // Public routes (no auth required)
+  // Public routes
   @Get('health')
   async health() {
     return this.gatewayService.health();
@@ -32,13 +51,12 @@ export class GatewayController {
 
   @Get('metrics')
   async metrics() {
-    // MetricsController handles this, but if you want it here:
-    return 'metrics endpoint';
+    return this.gatewayService.metrics();
   }
 
   // ==================== TREND ROUTES ====================
   @Post('trends')
-  async createTrend(@Body() body: CreateTrendRequest) {
+  async createTrend(@Body(new ZodValidationPipe(createTrendSchema)) body: CreateTrendRequest) {
     return this.gatewayService.createTrend(body);
   }
 
@@ -50,18 +68,19 @@ export class GatewayController {
   }
 
   @Get('trends')
-  async listTrends(
-    @Query('category') category?: string,
-    @Query('region') region?: string,
-    @Query('country') country?: string,
-    @Query('take') take?: string
-  ) {
-    return this.gatewayService.listTrends({ category, region, country, take });
+  async listTrends(@Query() rawQuery: Record<string, string | undefined>) {
+    const query = validateQuery(listTrendsQuerySchema, rawQuery);
+    return this.gatewayService.listTrends({
+      category: query.category,
+      region: query.region,
+      country: query.country,
+      take: query.take?.toString(),
+    });
   }
 
   // ==================== SCRIPT ROUTES ====================
   @Post('scripts/generate')
-  async generateScript(@Body() body: GenerateScriptRequest) {
+  async generateScript(@Body(new ZodValidationPipe(generateScriptSchema)) body: GenerateScriptRequest) {
     return this.gatewayService.generateScript(body);
   }
 
@@ -73,17 +92,18 @@ export class GatewayController {
   }
 
   @Get('scripts')
-  async listScripts(
-    @Query('trendId') trendId?: string,
-    @Query('language') language?: string,
-    @Query('take') take?: string
-  ) {
-    return this.gatewayService.listScripts({ trendId, language, take });
+  async listScripts(@Query() rawQuery: Record<string, string | undefined>) {
+    const query = validateQuery(listScriptsQuerySchema, rawQuery);
+    return this.gatewayService.listScripts({
+      trendId: query.trendId,
+      language: query.language,
+      take: query.take?.toString(),
+    });
   }
 
   // ==================== RENDER ROUTES ====================
   @Post('render/jobs')
-  async createVideoJob(@Body() body: CreateVideoJobRequest) {
+  async createVideoJob(@Body(new ZodValidationPipe(createVideoJobSchema)) body: CreateVideoJobRequest) {
     return this.gatewayService.createVideoJob(body);
   }
 
@@ -95,7 +115,7 @@ export class GatewayController {
   }
 
   @Post('render/videos/render')
-  async renderVideo(@Body() body: RenderVideoRequest) {
+  async renderVideo(@Body(new ZodValidationPipe(renderVideoSchema)) body: RenderVideoRequest) {
     return this.gatewayService.renderVideo(body);
   }
 
@@ -107,19 +127,26 @@ export class GatewayController {
   }
 
   @Get('render/videos')
-  async listVideos(
-    @Query('status') status?: string,
-    @Query('category') category?: string,
-    @Query('region') region?: string,
-    @Query('country') country?: string,
-    @Query('take') take?: string
-  ) {
-    return this.gatewayService.listVideos({ status, category, region, country, take });
+  async listVideos(@Query() rawQuery: Record<string, string | undefined>) {
+    const query = validateQuery(listVideosQuerySchema, rawQuery);
+    return this.gatewayService.listVideos({
+      status: query.status,
+      category: query.category,
+      region: query.region,
+      country: query.country,
+      take: query.take?.toString(),
+    });
+  }
+
+  @Get('render/videos/:id')
+  async getVideo(@Param() rawParams: Record<string, string>) {
+    const params = validateParams(idParamSchema, rawParams);
+    return this.gatewayService.getVideo(params.id);
   }
 
   // ==================== MODERATION ROUTES ====================
   @Post('moderation/videos/moderate')
-  async moderateVideo(@Body() body: ModerateVideoRequest) {
+  async moderateVideo(@Body(new ZodValidationPipe(moderateVideoSchema)) body: ModerateVideoRequest) {
     return this.gatewayService.moderateVideo(body);
   }
 
@@ -133,8 +160,9 @@ export class GatewayController {
   @Post('moderation/videos/:id/publish')
   @UseGuards(AdminJwtGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'MODERATOR')
-  async publishApproved(@Param('id') id: string) {
-    return this.gatewayService.publishApproved(id);
+  async publishApproved(@Param() rawParams: Record<string, string>) {
+    const params = validateParams(idParamSchema, rawParams);
+    return this.gatewayService.publishApproved(params.id);
   }
 
   @Post('moderation/videos/publish-approved')
@@ -145,49 +173,57 @@ export class GatewayController {
   }
 
   @Get('moderation/queue')
-  async listModerationQueue(
-    @Query('action') action?: string,
-    @Query('take') take?: string
-  ) {
-    return this.gatewayService.listModerationQueue({ action, take: take ? Number(take) : undefined });
+  async listModerationQueue(@Query() rawQuery: Record<string, string | undefined>) {
+    const query = validateQuery(moderationQueueQuerySchema, rawQuery);
+    return this.gatewayService.listModerationQueue({
+      action: query.action,
+      take: query.take?.toString(),
+    });
+  }
+
+  @Get('moderation/videos/:id/history')
+  async getModerationHistory(@Param() rawParams: Record<string, string>) {
+    const params = validateParams(idParamSchema, rawParams);
+    return this.gatewayService.getModerationHistory(params.id);
   }
 
   // ==================== RECOMMENDATION ROUTES ====================
   @Get('feed/seed')
-  async getSeedFeed(
-    @Query('userId') userId: string,
-    @Query('region') region?: string,
-    @Query('country') country?: string,
-    @Query('language') language?: string,
-    @Query('take') take?: string
-  ) {
-    return this.gatewayService.getSeedFeed({ userId, region, country, language, take });
+  async getSeedFeed(@Query() rawQuery: Record<string, string | undefined>) {
+    const query = validateQuery(seedFeedQuerySchema, rawQuery);
+    return this.gatewayService.getSeedFeed({
+      userId: query.userId,
+      region: query.region,
+      country: query.country,
+      language: query.language,
+      take: query.take?.toString(),
+    });
   }
 
   @Post('feed/events')
-  async createFeedEvent(@Body() body: CreateFeedEventRequest) {
+  async createFeedEvent(@Body(new ZodValidationPipe(feedEventSchema)) body: CreateFeedEventRequest) {
     return this.gatewayService.createFeedEvent(body);
+  }
+
+  @Get('feed/diagnostics/:userId')
+  async getUserFeedDiagnostics(@Param() rawParams: Record<string, string>) {
+    const params = validateParams(userIdParamSchema, rawParams);
+    return this.gatewayService.getUserFeedDiagnostics(params.userId);
   }
 
   // ==================== PROVIDER JOBS (Audit) ====================
   @Get('provider-jobs')
   @UseGuards(AdminJwtGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
-  async listProviderJobs(
-    @Query('videoId') videoId?: string,
-    @Query('jobType') jobType?: 'LLM_SCRIPT' | 'TTS' | 'AVATAR_VIDEO' | 'VIDEO_COMPOSITE' | 'MODERATION',
-    @Query('providerName') providerName?: string,
-    @Query('status') status?: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'FALLBACK_USED',
-    @Query('fallbackUsed') fallbackUsed?: string,
-    @Query('take') take?: string
-  ) {
+  async listProviderJobs(@Query() rawQuery: Record<string, string | undefined>) {
+    const query = validateQuery(providerJobsQuerySchema, rawQuery);
     const jobs = await this.providerJobQueryService.listProviderJobs({
-      videoId,
-      jobType,
-      providerName,
-      status,
-      fallbackUsed: fallbackUsed === undefined ? undefined : fallbackUsed === 'true',
-      take: take ? Number(take) : undefined,
+      videoId: query.videoId,
+      jobType: query.jobType,
+      providerName: query.providerName,
+      status: query.status,
+      fallbackUsed: query.fallbackUsed,
+      take: query.take,
     });
     return { success: true, data: jobs, meta: { count: jobs.length } };
   }
@@ -203,8 +239,9 @@ export class GatewayController {
   @Get('provider-jobs/:id')
   @UseGuards(AdminJwtGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
-  async getProviderJob(@Param('id') id: string) {
-    const job = await this.providerJobQueryService.getProviderJob(id);
+  async getProviderJob(@Param() rawParams: Record<string, string>) {
+    const params = validateParams(idParamSchema, rawParams);
+    const job = await this.providerJobQueryService.getProviderJob(params.id);
     return { success: true, data: job };
   }
 
@@ -212,21 +249,15 @@ export class GatewayController {
   @Get('script-provider-logs')
   @UseGuards(AdminJwtGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
-  async listScriptProviderLogs(
-    @Query('scriptId') scriptId?: string,
-    @Query('trendId') trendId?: string,
-    @Query('providerName') providerName?: string,
-    @Query('status') status?: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'FALLBACK_USED',
-    @Query('fallbackUsed') fallbackUsed?: string,
-    @Query('take') take?: string
-  ) {
+  async listScriptProviderLogs(@Query() rawQuery: Record<string, string | undefined>) {
+    const query = validateQuery(scriptProviderLogsQuerySchema, rawQuery);
     const logs = await this.scriptProviderQueryService.listLogs({
-      scriptId,
-      trendId,
-      providerName,
-      status,
-      fallbackUsed: fallbackUsed === undefined ? undefined : fallbackUsed === 'true',
-      take: take ? Number(take) : undefined,
+      scriptId: query.scriptId,
+      trendId: query.trendId,
+      providerName: query.providerName,
+      status: query.status,
+      fallbackUsed: query.fallbackUsed,
+      take: query.take,
     });
     return { success: true, data: logs, meta: { count: logs.length } };
   }
@@ -242,8 +273,9 @@ export class GatewayController {
   @Get('script-provider-logs/:id')
   @UseGuards(AdminJwtGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
-  async getScriptProviderLog(@Param('id') id: string) {
-    const log = await this.scriptProviderQueryService.getLog(id);
+  async getScriptProviderLog(@Param() rawParams: Record<string, string>) {
+    const params = validateParams(idParamSchema, rawParams);
+    const log = await this.scriptProviderQueryService.getLog(params.id);
     return { success: true, data: log };
   }
 
