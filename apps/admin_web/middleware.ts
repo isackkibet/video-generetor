@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { jwtVerify } from "jose";
+import jwt from "jsonwebtoken";
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (pathname.startsWith("/login") || pathname.startsWith("/api/auth/login")) {
@@ -9,9 +9,6 @@ export async function middleware(request: NextRequest) {
   }
 
   const cookieName = process.env.ADMIN_SESSION_COOKIE || "yohpal_admin_session";
-  const secret = new TextEncoder().encode(
-    process.env.ADMIN_JWT_SECRET || "dev-secret"
-  );
   const token = request.cookies.get(cookieName)?.value;
 
   if (!token) {
@@ -19,7 +16,7 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    await jwtVerify(token, secret);
+    jwt.verify(token, process.env.ADMIN_JWT_SECRET || "dev-secret");
     return NextResponse.next();
   } catch {
     return NextResponse.redirect(new URL("/login", request.url));
