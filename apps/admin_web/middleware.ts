@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { jwtVerify } from "jose";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (pathname.startsWith("/login") || pathname.startsWith("/api/auth/login")) {
@@ -16,7 +16,10 @@ export function middleware(request: NextRequest) {
   }
 
   try {
-    jwt.verify(token, process.env.ADMIN_JWT_SECRET || "dev-secret");
+    const secret = new TextEncoder().encode(
+      process.env.ADMIN_JWT_SECRET || "dev-secret",
+    );
+    await jwtVerify(token, secret);
     return NextResponse.next();
   } catch {
     return NextResponse.redirect(new URL("/login", request.url));
@@ -35,7 +38,7 @@ export const config = {
     "/feed-diagnostics/:path*",
     "/admin-users/:path*",
     "/admin-audit-logs/:path*",
-    "/observability/:path*", // ✅ Added
+    "/observability/:path*",
     "/api/admin/:path*",
   ],
 };
