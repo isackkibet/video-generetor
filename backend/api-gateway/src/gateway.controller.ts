@@ -1,5 +1,11 @@
-import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
-import { GatewayService } from "./gateway.service";
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { GatewayService } from './gateway.service';
+import { ProviderJobQueryService } from '../../shared/provider-job-query.service';
+import { ScriptProviderQueryService } from '../../shared/script-provider-query.service';
+import { ObservabilityQueryService } from '../../shared/observability-query.service';
+import { AdminJwtGuard } from '../../shared/admin-jwt.guard';
+import { RolesGuard } from '../../shared/roles.guard';
+import { Roles } from '../../shared/roles.decorator';
 import {
   CreateFeedEventRequest,
   CreateTrendRequest,
@@ -7,11 +13,7 @@ import {
   GenerateScriptRequest,
   ModerateVideoRequest,
   RenderVideoRequest,
-} from "../../../contracts/api-contracts";
-import { ProviderJobQueryService } from "../../shared/provider-job-query.service";
-import { ScriptProviderQueryService } from "../../shared/script-provider-query.service";
-// ✅ Added: ObservabilityQueryService import
-import { ObservabilityQueryService } from "../../shared/observability-query.service";
+} from '../../../contracts/api-contracts';
 
 @Controller()
 export class GatewayController {
@@ -19,269 +21,254 @@ export class GatewayController {
     private readonly gatewayService: GatewayService,
     private readonly providerJobQueryService: ProviderJobQueryService,
     private readonly scriptProviderQueryService: ScriptProviderQueryService,
-    // ✅ Added: ObservabilityQueryService
     private readonly observabilityQueryService: ObservabilityQueryService,
   ) {}
 
-  @Get("health")
+  // Public routes (no auth required)
+  @Get('health')
   async health() {
     return this.gatewayService.health();
   }
 
-  @Post("trends")
+  @Get('metrics')
+  async metrics() {
+    // MetricsController handles this, but if you want it here:
+    return 'metrics endpoint';
+  }
+
+  // ==================== TREND ROUTES ====================
+  @Post('trends')
   async createTrend(@Body() body: CreateTrendRequest) {
     return this.gatewayService.createTrend(body);
   }
 
-  @Post("trends/discover-seed")
+  @Post('trends/discover-seed')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'CONTENT_ADMIN')
   async discoverSeedTrends() {
     return this.gatewayService.discoverSeedTrends();
   }
 
-  @Get("trends")
+  @Get('trends')
   async listTrends(
-    @Query("category") category?: string,
-    @Query("region") region?: string,
-    @Query("country") country?: string,
-    @Query("take") take?: string,
+    @Query('category') category?: string,
+    @Query('region') region?: string,
+    @Query('country') country?: string,
+    @Query('take') take?: string
   ) {
     return this.gatewayService.listTrends({ category, region, country, take });
   }
 
-  @Post("scripts/generate")
+  // ==================== SCRIPT ROUTES ====================
+  @Post('scripts/generate')
   async generateScript(@Body() body: GenerateScriptRequest) {
     return this.gatewayService.generateScript(body);
   }
 
-  @Post("scripts/generate-pending")
-  async generatePendingScripts(@Query("take") take?: string) {
+  @Post('scripts/generate-pending')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'CONTENT_ADMIN')
+  async generatePendingScripts(@Query('take') take?: string) {
     return this.gatewayService.generatePendingScripts(take);
   }
 
-  @Get("scripts")
+  @Get('scripts')
   async listScripts(
-    @Query("trendId") trendId?: string,
-    @Query("language") language?: string,
-    @Query("take") take?: string,
+    @Query('trendId') trendId?: string,
+    @Query('language') language?: string,
+    @Query('take') take?: string
   ) {
     return this.gatewayService.listScripts({ trendId, language, take });
   }
 
-  @Post("render/jobs")
+  // ==================== RENDER ROUTES ====================
+  @Post('render/jobs')
   async createVideoJob(@Body() body: CreateVideoJobRequest) {
     return this.gatewayService.createVideoJob(body);
   }
 
-  @Post("render/jobs/create-pending")
-  async createPendingVideoJobs(@Query("take") take?: string) {
+  @Post('render/jobs/create-pending')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'CONTENT_ADMIN')
+  async createPendingVideoJobs(@Query('take') take?: string) {
     return this.gatewayService.createPendingVideoJobs(take);
   }
 
-  @Post("render/videos/render")
+  @Post('render/videos/render')
   async renderVideo(@Body() body: RenderVideoRequest) {
     return this.gatewayService.renderVideo(body);
   }
 
-  @Post("render/videos/render-pending")
-  async renderPendingVideos(@Query("take") take?: string) {
+  @Post('render/videos/render-pending')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'CONTENT_ADMIN')
+  async renderPendingVideos(@Query('take') take?: string) {
     return this.gatewayService.renderPendingVideos(take);
   }
 
-  @Get("render/videos")
+  @Get('render/videos')
   async listVideos(
-    @Query("status") status?: string,
-    @Query("category") category?: string,
-    @Query("region") region?: string,
-    @Query("country") country?: string,
-    @Query("take") take?: string,
+    @Query('status') status?: string,
+    @Query('category') category?: string,
+    @Query('region') region?: string,
+    @Query('country') country?: string,
+    @Query('take') take?: string
   ) {
-    return this.gatewayService.listVideos({
-      status,
-      category,
-      region,
-      country,
-      take,
-    });
+    return this.gatewayService.listVideos({ status, category, region, country, take });
   }
 
-  @Post("moderation/videos/moderate")
+  // ==================== MODERATION ROUTES ====================
+  @Post('moderation/videos/moderate')
   async moderateVideo(@Body() body: ModerateVideoRequest) {
     return this.gatewayService.moderateVideo(body);
   }
 
-  @Post("moderation/videos/moderate-pending")
-  async moderatePendingVideos(@Query("take") take?: string) {
+  @Post('moderation/videos/moderate-pending')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'MODERATOR')
+  async moderatePendingVideos(@Query('take') take?: string) {
     return this.gatewayService.moderatePendingVideos(take);
   }
 
-  @Post("moderation/videos/:id/publish")
-  async publishApproved(@Param("id") id: string) {
+  @Post('moderation/videos/:id/publish')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'MODERATOR')
+  async publishApproved(@Param('id') id: string) {
     return this.gatewayService.publishApproved(id);
   }
 
-  @Post("moderation/videos/publish-approved")
-  async publishAllApproved(@Query("take") take?: string) {
+  @Post('moderation/videos/publish-approved')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'MODERATOR')
+  async publishAllApproved(@Query('take') take?: string) {
     return this.gatewayService.publishAllApproved(take);
   }
 
-  @Get("feed/seed")
-  async getSeedFeed(
-    @Query("userId") userId: string,
-    @Query("region") region?: string,
-    @Query("country") country?: string,
-    @Query("language") language?: string,
-    @Query("take") take?: string,
+  @Get('moderation/queue')
+  async listModerationQueue(
+    @Query('action') action?: string,
+    @Query('take') take?: string
   ) {
-    return this.gatewayService.getSeedFeed({
-      userId,
-      region,
-      country,
-      language,
-      take,
-    });
+    return this.gatewayService.listModerationQueue({ action, take: take ? Number(take) : undefined });
   }
 
-  @Post("feed/events")
+  // ==================== RECOMMENDATION ROUTES ====================
+  @Get('feed/seed')
+  async getSeedFeed(
+    @Query('userId') userId: string,
+    @Query('region') region?: string,
+    @Query('country') country?: string,
+    @Query('language') language?: string,
+    @Query('take') take?: string
+  ) {
+    return this.gatewayService.getSeedFeed({ userId, region, country, language, take });
+  }
+
+  @Post('feed/events')
   async createFeedEvent(@Body() body: CreateFeedEventRequest) {
     return this.gatewayService.createFeedEvent(body);
   }
 
-  @Post("pipeline/run-seed")
-  async runSeedPipeline(@Query("take") take?: string) {
-    return this.gatewayService.runSeedPipeline(take || "10");
-  }
-
-  // ✅ Provider Job Audit Routes (from Batch 18)
-  @Get("provider-jobs")
+  // ==================== PROVIDER JOBS (Audit) ====================
+  @Get('provider-jobs')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
   async listProviderJobs(
-    @Query("videoId") videoId?: string,
-    @Query("jobType")
-    jobType?:
-      | "LLM_SCRIPT"
-      | "TTS"
-      | "AVATAR_VIDEO"
-      | "VIDEO_COMPOSITE"
-      | "MODERATION",
-    @Query("providerName") providerName?: string,
-    @Query("status")
-    status?: "PENDING" | "RUNNING" | "SUCCESS" | "FAILED" | "FALLBACK_USED",
-    @Query("fallbackUsed") fallbackUsed?: string,
-    @Query("take") take?: string,
+    @Query('videoId') videoId?: string,
+    @Query('jobType') jobType?: 'LLM_SCRIPT' | 'TTS' | 'AVATAR_VIDEO' | 'VIDEO_COMPOSITE' | 'MODERATION',
+    @Query('providerName') providerName?: string,
+    @Query('status') status?: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'FALLBACK_USED',
+    @Query('fallbackUsed') fallbackUsed?: string,
+    @Query('take') take?: string
   ) {
     const jobs = await this.providerJobQueryService.listProviderJobs({
       videoId,
       jobType,
       providerName,
       status,
-      fallbackUsed:
-        fallbackUsed === undefined ? undefined : fallbackUsed === "true",
+      fallbackUsed: fallbackUsed === undefined ? undefined : fallbackUsed === 'true',
       take: take ? Number(take) : undefined,
     });
-
-    return {
-      success: true,
-      data: jobs,
-      meta: {
-        count: jobs.length,
-      },
-    };
+    return { success: true, data: jobs, meta: { count: jobs.length } };
   }
 
-  @Get("provider-jobs/summary")
+  @Get('provider-jobs/summary')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
   async getProviderJobSummary() {
     const summary = await this.providerJobQueryService.getProviderJobSummary();
-    return {
-      success: true,
-      data: summary,
-    };
+    return { success: true, data: summary };
   }
 
-  @Get("provider-jobs/:id")
-  async getProviderJob(@Param("id") id: string) {
+  @Get('provider-jobs/:id')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  async getProviderJob(@Param('id') id: string) {
     const job = await this.providerJobQueryService.getProviderJob(id);
-    return {
-      success: true,
-      data: job,
-    };
+    return { success: true, data: job };
   }
 
-  // ✅ Script Provider Log Routes (Batch 20)
-  @Get("script-provider-logs")
+  // ==================== SCRIPT PROVIDER LOGS (Audit) ====================
+  @Get('script-provider-logs')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
   async listScriptProviderLogs(
-    @Query("scriptId") scriptId?: string,
-    @Query("trendId") trendId?: string,
-    @Query("providerName") providerName?: string,
-    @Query("status")
-    status?: "PENDING" | "RUNNING" | "SUCCESS" | "FAILED" | "FALLBACK_USED",
-    @Query("fallbackUsed") fallbackUsed?: string,
-    @Query("take") take?: string,
+    @Query('scriptId') scriptId?: string,
+    @Query('trendId') trendId?: string,
+    @Query('providerName') providerName?: string,
+    @Query('status') status?: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'FALLBACK_USED',
+    @Query('fallbackUsed') fallbackUsed?: string,
+    @Query('take') take?: string
   ) {
     const logs = await this.scriptProviderQueryService.listLogs({
       scriptId,
       trendId,
       providerName,
       status,
-      fallbackUsed:
-        fallbackUsed === undefined ? undefined : fallbackUsed === "true",
+      fallbackUsed: fallbackUsed === undefined ? undefined : fallbackUsed === 'true',
       take: take ? Number(take) : undefined,
     });
-
-    return {
-      success: true,
-      data: logs,
-      meta: {
-        count: logs.length,
-      },
-    };
+    return { success: true, data: logs, meta: { count: logs.length } };
   }
 
-  @Get("script-provider-logs/summary")
+  @Get('script-provider-logs/summary')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
   async getScriptProviderLogSummary() {
     const summary = await this.scriptProviderQueryService.getSummary();
-    return {
-      success: true,
-      data: summary,
-    };
+    return { success: true, data: summary };
   }
 
-  @Get("script-provider-logs/:id")
-  async getScriptProviderLog(@Param("id") id: string) {
+  @Get('script-provider-logs/:id')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  async getScriptProviderLog(@Param('id') id: string) {
     const log = await this.scriptProviderQueryService.getLog(id);
-    return {
-      success: true,
-      data: log,
-    };
+    return { success: true, data: log };
   }
 
-  // ✅ Feed Diagnostics Route (Batch 22)
-  @Get("feed/diagnostics/:userId")
-  async getUserFeedDiagnostics(@Param("userId") userId: string) {
-    return this.gatewayService.getUserFeedDiagnostics(userId);
-  }
-
-  // ✅ Service Status Route (Batch 29)
-  @Get("observability/services")
-  async serviceStatus() {
-    return this.gatewayService.serviceStatus();
-  }
-
-  // ✅ NEW: Provider Failures Route (Batch 29)
-  @Get("observability/provider-failures")
+  // ==================== OBSERVABILITY (Audit) ====================
+  @Get('observability/provider-failures')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
   async providerFailureSummary() {
     const data = await this.observabilityQueryService.providerFailureSummary();
-    return {
-      success: true,
-      data,
-    };
+    return { success: true, data };
   }
 
-  // ✅ NEW: Pipeline Summary Route (Batch 29)
-  @Get("observability/pipeline-summary")
+  @Get('observability/pipeline-summary')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
   async pipelineSummary() {
     const data = await this.observabilityQueryService.contentPipelineSummary();
-    return {
-      success: true,
-      data,
-    };
+    return { success: true, data };
+  }
+
+  // ==================== PIPELINE (Super Admin only) ====================
+  @Post('pipeline/run-seed')
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  async runSeedPipeline(@Query('take') take?: string) {
+    return this.gatewayService.runSeedPipeline(take || '10');
   }
 }
