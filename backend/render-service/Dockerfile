@@ -1,5 +1,4 @@
-FROM node:20-slim
-RUN apt-get update -qq && apt-get install -y -qq openssl && rm -rf /var/lib/apt/lists/*
+FROM node:20-alpine
 WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY tsconfig.json ./
