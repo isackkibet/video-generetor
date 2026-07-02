@@ -369,3 +369,19 @@ model AdminUser {
   @@index([email])
   @@index([role])
 }
+
+model EventProcessingLog {
+  id             String   @id @default(uuid())
+  idempotencyKey String   @unique
+  topic          String
+  status         String
+  attempts       Int      @default(0)
+  errorMessage   String?
+  payload        Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([topic])
+  @@index([status])
+  @@index([createdAt])
+}

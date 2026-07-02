@@ -1,15 +1,18 @@
-export const KafkaTopics = {
-  TREND_DISCOVERED: "trend.discovered",
-  SCRIPT_CREATED: "script.created",
-  VIDEO_RENDER_REQUESTED: "video.render.requested",
-  VIDEO_RENDERED: "video.rendered",
-  VIDEO_SCORED: "video.scored",
-  VIDEO_MODERATED: "video.moderated",
-  VIDEO_PUBLISHED: "video.published",
-  FEED_EVENT_CREATED: "feed.event.created",
-  AD_CAMPAIGN_CREATED: "ad.campaign.created",
-} as const;
-export type KafkaTopic = (typeof KafkaTopics)[keyof typeof KafkaTopics];
+export enum KafkaTopics {
+  TREND_DISCOVERED = 'trend.discovered',
+  SCRIPT_CREATED = 'script.created',
+  VIDEO_RENDER_REQUESTED = 'video.render.requested',
+  VIDEO_RENDERED = 'video.rendered',
+  VIDEO_SCORED = 'video.scored',
+  VIDEO_MODERATED = 'video.moderated',
+  VIDEO_PUBLISHED = 'video.published',
+  FEED_EVENT_CREATED = 'feed.event.created',
+  PIPELINE_RETRY = 'pipeline.retry',
+  PIPELINE_DEAD_LETTER = 'pipeline.dead-letter',
+  FEED_INDEX_REQUESTED = 'feed.index.requested',
+  AD_CAMPAIGN_CREATED = 'ad.campaign.created',
+}
+export type KafkaTopic = KafkaTopics;
 export type TrendDiscoveredEvent = {
   trendId: string;
   topic: string;
@@ -71,4 +74,22 @@ export type AdCampaignCreatedEvent = {
   advertiser: string;
   title: string;
   budget: number;
+};
+
+export type PipelineRetryEvent = {
+  originalTopic: string;
+  payload: unknown;
+  errorMessage: string;
+  attempt: number;
+  nextRunAt: string;
+  idempotencyKey: string;
+};
+
+export type PipelineDeadLetterEvent = {
+  originalTopic: string;
+  payload: unknown;
+  errorMessage: string;
+  attempts: number;
+  failedAt: string;
+  idempotencyKey: string;
 };
