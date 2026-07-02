@@ -30,6 +30,7 @@ export async function POST(request: Request) {
         "/login?error=Email%20and%20password%20are%20required",
         request.url,
       ),
+      303,
     );
   }
 
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
   if (!admin || !admin.isActive) {
     return NextResponse.redirect(
       new URL("/login?error=Invalid%20credentials", request.url),
+      303,
     );
   }
 
@@ -47,6 +49,7 @@ export async function POST(request: Request) {
   if (!valid) {
     return NextResponse.redirect(
       new URL("/login?error=Invalid%20credentials", request.url),
+      303,
     );
   }
 
@@ -59,5 +62,5 @@ export async function POST(request: Request) {
 
   setAdminCookie(token);
 
-  return NextResponse.redirect(new URL("/", request.url));
+  return NextResponse.redirect(new URL("/", request.url), 303);
 }

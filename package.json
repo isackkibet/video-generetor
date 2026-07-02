@@ -21,6 +21,7 @@
     "bullmq": "^5.34.5",
     "dotenv": "^16.4.7",
     "ioredis": "^5.4.2",
+    "jose": "^6.2.3",
     "jsonwebtoken": "^9.0.3",
     "kafkajs": "^2.2.4",
     "prom-client": "^15.1.3",
