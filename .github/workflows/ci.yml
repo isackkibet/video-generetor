@@ -22,7 +22,6 @@ jobs:
         image: redis:7-alpine
         ports:
           - 6379:6379
-
     env:
       NODE_ENV: test
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/yohpal_live_ai
@@ -32,7 +31,6 @@ jobs:
       API_GATEWAY_KEY: test-api-key
       SERVICE_AUTH_KEY: test-service-key
       ENABLE_KAFKA_WORKERS: "false"
-
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -45,3 +43,12 @@ jobs:
       - run: npm run typecheck
       - run: npm run test
       - run: npm run test:e2e
+      - name: Run production readiness regression tests
+        run: npm run test:production-readiness
+      - name: Generate CI evidence
+        run: npm run ci:evidence
+      - name: Upload CI evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: yohpal-live-ci-evidence
+          path: evidence/ci-evidence.json

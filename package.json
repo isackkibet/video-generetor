@@ -7,6 +7,9 @@
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
     "test:e2e": "jest --config jest.e2e.config.js --runInBand",
+    "test:production-readiness": "jest tests/production-readiness --runInBand",
+    "ci:evidence": "node scripts/generate-ci-evidence.js",
+    "ci:production-readiness": "npm run typecheck && npm run test:production-readiness && npm run test:e2e && npm run ci:evidence",
     "typecheck": "tsc --noEmit",
     "ci": "npm run typecheck && npm run test && npm run test:e2e"
   },
