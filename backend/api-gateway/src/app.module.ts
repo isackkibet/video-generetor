@@ -6,6 +6,7 @@ import { GatewayService } from "./gateway.service";
 import { ProviderJobQueryService } from "../../shared/provider-job-query.service";
 import { ScriptProviderQueryService } from "../../shared/script-provider-query.service";
 import { ObservabilityQueryService } from "../../shared/observability-query.service";
+import { EventAdminService } from "../../shared/event-admin.service"; // ✅ NEW: Batch 43
 import { PrismaService } from "../../shared/prisma.service";
 import { ApiGatewayKeyMiddleware } from "./api-key.middleware";
 import { RequestIdMiddleware } from "../../shared/request-id.middleware";
@@ -30,6 +31,7 @@ import { AdminJwtGuard } from "../../shared/admin-jwt.guard";
     ProviderJobQueryService,
     ScriptProviderQueryService,
     ObservabilityQueryService,
+    EventAdminService, // ✅ NEW: Batch 43
     PrismaService,
     RolesGuard,
     AdminJwtGuard,
