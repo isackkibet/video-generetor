@@ -3,6 +3,8 @@ import { publishEvent } from "./kafka";
 import { logError, logInfo, logWarn } from "./logger";
 import { PrismaService } from "./prisma.service";
 import { EventProcessingService } from "./event-processing.service";
+// ✅ Added: worker metrics
+import { workerEventDurationMs, workerEventsTotal } from "./metrics";
 
 export async function startKafkaWorker<T>(input: {
   service: string;
@@ -26,6 +28,7 @@ export async function startKafkaWorker<T>(input: {
 
       let event: T;
       let idempotencyKey: string;
+      let startedAt: number;
 
       try {
         event = input.parse(raw, topic);
@@ -56,6 +59,9 @@ export async function startKafkaWorker<T>(input: {
           },
         });
 
+        // ✅ Record start time before handling
+        startedAt = Date.now();
+
         await input.handle(event, topic);
 
         await processing.success(idempotencyKey);
@@ -65,6 +71,21 @@ export async function startKafkaWorker<T>(input: {
           message: "Kafka event processing completed",
           metadata: { topic, idempotencyKey },
         });
+
+        // ✅ Success metrics
+        workerEventsTotal.inc({
+          service: input.service,
+          topic,
+          status: "success",
+        });
+        workerEventDurationMs.observe(
+          {
+            service: input.service,
+            topic,
+            status: "success",
+          },
+          Date.now() - startedAt,
+        );
       } catch (error) {
         const messageText =
           error instanceof Error
@@ -79,6 +100,21 @@ export async function startKafkaWorker<T>(input: {
             error: messageText,
           },
         });
+
+        // ✅ Failure metrics (duration set to 0 per spec)
+        workerEventsTotal.inc({
+          service: input.service,
+          topic,
+          status: "failed",
+        });
+        workerEventDurationMs.observe(
+          {
+            service: input.service,
+            topic,
+            status: "failed",
+          },
+          0,
+        );
 
         try {
           const parsed = JSON.parse(raw);
