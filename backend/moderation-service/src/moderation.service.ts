@@ -7,6 +7,11 @@ import { createModerationProvider } from "../../../ai/providers/provider-factory
 import { ProviderJobLogger } from "../../shared/provider-job-logger";
 // ✅ NEW: Batch 44 - Import provider stage runner
 import { runAuditedProviderStage } from "../../shared/provider-stage-runner";
+// ✅ Added: Batch 45 - Metrics
+import {
+  moderationQueueSize,
+  publishedVideosTotal,
+} from "../../shared/metrics";
 
 // ✅ Define ModerationAction locally instead of importing from Prisma
 type ModerationAction = "ALLOW" | "LIMIT" | "REVIEW" | "BLOCK";
@@ -129,6 +134,23 @@ export class ModerationService {
         }),
       );
     }
+
+    // ✅ Batch 45: Set moderation queue size metric
+    const remaining = await this.prisma.video.count({
+      where: {
+        status: "MODERATION",
+        videoUrl: {
+          not: null,
+        },
+      },
+    });
+    moderationQueueSize.set(
+      {
+        service: "moderation-service",
+      },
+      remaining,
+    );
+
     return moderated;
   }
 
@@ -215,6 +237,13 @@ export class ModerationService {
       },
       published.id,
     );
+
+    // ✅ Batch 45: Increment published videos counter
+    publishedVideosTotal.inc({
+      service: "moderation-service",
+      category: published.category,
+      country: published.country || "unknown",
+    });
 
     return published;
   }
