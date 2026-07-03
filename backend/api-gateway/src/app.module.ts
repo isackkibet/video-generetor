@@ -1,17 +1,19 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { APP_GUARD, Reflector } from '@nestjs/core';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { GatewayController } from './gateway.controller';
-import { GatewayService } from './gateway.service';
-import { ProviderJobQueryService } from '../../shared/provider-job-query.service';
-import { ScriptProviderQueryService } from '../../shared/script-provider-query.service';
-import { ObservabilityQueryService } from '../../shared/observability-query.service';
-import { PrismaService } from '../../shared/prisma.service';
-import { ApiGatewayKeyMiddleware } from './api-key.middleware';
-import { RequestIdMiddleware } from '../../shared/request-id.middleware';
-import { RequestAuditMiddleware } from '../../shared/request-audit.middleware';
-import { HealthController } from '../../shared/health.controller';
-import { MetricsController } from '../../shared/metrics.controller';
+import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
+import { APP_GUARD } from "@nestjs/core";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { GatewayController } from "./gateway.controller";
+import { GatewayService } from "./gateway.service";
+import { ProviderJobQueryService } from "../../shared/provider-job-query.service";
+import { ScriptProviderQueryService } from "../../shared/script-provider-query.service";
+import { ObservabilityQueryService } from "../../shared/observability-query.service";
+import { PrismaService } from "../../shared/prisma.service";
+import { ApiGatewayKeyMiddleware } from "./api-key.middleware";
+import { RequestIdMiddleware } from "../../shared/request-id.middleware";
+import { RequestAuditMiddleware } from "../../shared/request-audit.middleware";
+import { HealthController } from "../../shared/health.controller";
+import { MetricsController } from "../../shared/metrics.controller";
+import { RolesGuard } from "../../shared/roles.guard";
+import { AdminJwtGuard } from "../../shared/admin-jwt.guard";
 
 @Module({
   imports: [
@@ -29,7 +31,8 @@ import { MetricsController } from '../../shared/metrics.controller';
     ScriptProviderQueryService,
     ObservabilityQueryService,
     PrismaService,
-    Reflector,
+    RolesGuard,
+    AdminJwtGuard,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
@@ -39,7 +42,11 @@ import { MetricsController } from '../../shared/metrics.controller';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(RequestIdMiddleware, RequestAuditMiddleware, ApiGatewayKeyMiddleware)
-      .forRoutes('*');
+      .apply(
+        RequestIdMiddleware,
+        RequestAuditMiddleware,
+        ApiGatewayKeyMiddleware,
+      )
+      .forRoutes("*");
   }
 }

@@ -9,7 +9,7 @@ import { AdminRole, ROLES_KEY } from './roles.decorator';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  private readonly reflector = new Reflector();
 
   canActivate(context: ExecutionContext): boolean {
     if (process.env.NODE_ENV === 'development') {
