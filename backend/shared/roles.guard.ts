@@ -3,16 +3,16 @@ import {
   ExecutionContext,
   ForbiddenException,
   Injectable,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { AdminRole, ROLES_KEY } from './roles.decorator';
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { AdminRole, ROLES_KEY } from "./roles.decorator";
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   private readonly reflector = new Reflector();
 
   canActivate(context: ExecutionContext): boolean {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       return true;
     }
 
@@ -29,7 +29,7 @@ export class RolesGuard implements CanActivate {
     const admin = request.admin;
 
     if (!admin || !roles.includes(admin.role)) {
-      throw new ForbiddenException('Insufficient admin permissions');
+      throw new ForbiddenException("Insufficient admin permissions");
     }
 
     return true;
