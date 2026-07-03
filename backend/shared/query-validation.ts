@@ -1,8 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
-import { ZodSchema } from 'zod';
+import { ZodType } from 'zod';
 
 export function validateQuery<T>(
-  schema: ZodSchema<T>,
+  schema: ZodType<T, any, any>,
   query: Record<string, unknown>
 ): T {
   const result = schema.safeParse(query);
@@ -20,7 +20,7 @@ export function validateQuery<T>(
 }
 
 export function validateParams<T>(
-  schema: ZodSchema<T>,
+  schema: ZodType<T, any, any>,
   params: Record<string, unknown>
 ): T {
   const result = schema.safeParse(params);

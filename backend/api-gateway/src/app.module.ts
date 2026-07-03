@@ -1,6 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD, Reflector } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { GatewayController } from './gateway.controller';
 import { GatewayService } from './gateway.service';
 import { ProviderJobQueryService } from '../../shared/provider-job-query.service';
@@ -29,6 +29,7 @@ import { MetricsController } from '../../shared/metrics.controller';
     ScriptProviderQueryService,
     ObservabilityQueryService,
     PrismaService,
+    Reflector,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

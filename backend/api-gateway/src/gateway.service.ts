@@ -137,6 +137,22 @@ export class GatewayService {
     );
   }
 
+  async metrics() {
+    return this.serviceStatus();
+  }
+
+  async getVideo(id: string) {
+    return this.get(`${this.renderServiceUrl}/render/videos/${id}`);
+  }
+
+  async listModerationQueue(query: Record<string, string | undefined>) {
+    return this.get(`${this.moderationServiceUrl}/moderation/queue`, query);
+  }
+
+  async getModerationHistory(id: string) {
+    return this.get(`${this.moderationServiceUrl}/moderation/videos/${id}/history`);
+  }
+
   async runSeedPipeline(take = "10") {
     const trends = await this.discoverSeedTrends();
     const scripts = await this.generatePendingScripts(take);
