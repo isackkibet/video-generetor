@@ -14,6 +14,8 @@ import { ProviderJobQueryService } from "../../shared/provider-job-query.service
 import { ScriptProviderQueryService } from "../../shared/script-provider-query.service";
 import { ObservabilityQueryService } from "../../shared/observability-query.service";
 import { EventAdminService } from "../../shared/event-admin.service";
+// ✅ NEW: Batch 46
+import { BackupEvidenceService } from "../../shared/backup-evidence.service";
 import { AdminJwtGuard } from "../../shared/admin-jwt.guard";
 import { RolesGuard } from "../../shared/roles.guard";
 import { Roles } from "../../shared/roles.decorator";
@@ -53,6 +55,8 @@ export class GatewayController {
     private readonly scriptProviderQueryService: ScriptProviderQueryService,
     private readonly observabilityQueryService: ObservabilityQueryService,
     private readonly eventAdminService: EventAdminService,
+    // ✅ NEW: Batch 46
+    private readonly backupEvidenceService: BackupEvidenceService,
   ) {}
 
   // Public routes
@@ -348,6 +352,17 @@ export class GatewayController {
     return {
       success: true,
       data: await this.observabilityQueryService.metricsEvidence(),
+    };
+  }
+
+  // ✅ NEW: Batch 46 - Backup evidence
+  @Get("observability/backup-evidence")
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles("SUPER_ADMIN")
+  async backupEvidence() {
+    return {
+      success: true,
+      data: await this.backupEvidenceService.getBackupEvidence(),
     };
   }
 
