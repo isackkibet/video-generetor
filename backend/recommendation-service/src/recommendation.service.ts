@@ -11,6 +11,8 @@ import {
   SeedFeedRequest,
 } from "../../../contracts/api-contracts";
 import { FeedLearningService } from "../../shared/feed-learning.service";
+// ✅ Added: feed request duration metrics
+import { feedRequestDurationMs } from "../../shared/metrics";
 
 type RankedVideo = {
   id: string;
@@ -43,6 +45,9 @@ export class RecommendationService {
   ) {}
 
   async getSeedFeed(input: SeedFeedRequest): Promise<RankedVideo[]> {
+    // ✅ Record start time for feed latency metrics
+    const startedAt = Date.now();
+
     const take = input.take && input.take > 0 ? Math.min(input.take, 100) : 30;
 
     const videos = await this.prisma.video.findMany({
@@ -156,6 +161,16 @@ export class RecommendationService {
           },
         };
       }),
+    );
+
+    // ✅ Record feed request duration metric
+    feedRequestDurationMs.observe(
+      {
+        service: "recommendation-service",
+        region: input.region || "unknown",
+        country: input.country || "unknown",
+      },
+      Date.now() - startedAt,
     );
 
     return rankedVideos
