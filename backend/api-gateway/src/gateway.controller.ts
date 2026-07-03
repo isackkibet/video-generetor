@@ -13,7 +13,7 @@ import { GatewayService } from "./gateway.service";
 import { ProviderJobQueryService } from "../../shared/provider-job-query.service";
 import { ScriptProviderQueryService } from "../../shared/script-provider-query.service";
 import { ObservabilityQueryService } from "../../shared/observability-query.service";
-import { EventAdminService } from "../../shared/event-admin.service"; // ✅ NEW: Batch 43
+import { EventAdminService } from "../../shared/event-admin.service";
 import { AdminJwtGuard } from "../../shared/admin-jwt.guard";
 import { RolesGuard } from "../../shared/roles.guard";
 import { Roles } from "../../shared/roles.decorator";
@@ -33,8 +33,8 @@ import {
   idParamSchema,
   providerJobsQuerySchema,
   scriptProviderLogsQuerySchema,
-  eventProcessingQuerySchema, // ✅ NEW: Batch 43
-  retryEventSchema, // ✅ NEW: Batch 43
+  eventProcessingQuerySchema,
+  retryEventSchema,
 } from "../../../contracts/validation-schemas";
 import {
   CreateFeedEventRequest,
@@ -52,7 +52,7 @@ export class GatewayController {
     private readonly providerJobQueryService: ProviderJobQueryService,
     private readonly scriptProviderQueryService: ScriptProviderQueryService,
     private readonly observabilityQueryService: ObservabilityQueryService,
-    private readonly eventAdminService: EventAdminService, // ✅ NEW: Batch 43
+    private readonly eventAdminService: EventAdminService,
   ) {}
 
   // Public routes
@@ -327,6 +327,17 @@ export class GatewayController {
   async pipelineSummary() {
     const data = await this.observabilityQueryService.contentPipelineSummary();
     return { success: true, data };
+  }
+
+  // ✅ NEW: Batch 44 - Provider resilience evidence
+  @Get("observability/provider-resilience-evidence")
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles("SUPER_ADMIN")
+  async providerResilienceEvidence() {
+    return {
+      success: true,
+      data: await this.observabilityQueryService.providerResilienceEvidence(),
+    };
   }
 
   // ==================== EVENT PROCESSING (Batch 43) ====================

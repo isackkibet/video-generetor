@@ -1,8 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "./prisma.service";
+
 @Injectable()
 export class ObservabilityQueryService {
   constructor(private readonly prisma: PrismaService) {}
+
   async providerFailureSummary() {
     const [
       providerJobsTotal,
@@ -19,6 +21,7 @@ export class ObservabilityQueryService {
       this.prisma.scriptProviderLog.count({ where: { status: "FAILED" } }),
       this.prisma.scriptProviderLog.count({ where: { fallbackUsed: true } }),
     ]);
+
     return {
       providerJobs: {
         total: providerJobsTotal,
@@ -32,6 +35,7 @@ export class ObservabilityQueryService {
       },
     };
   }
+
   async contentPipelineSummary() {
     const [
       trends,
@@ -56,6 +60,7 @@ export class ObservabilityQueryService {
       this.prisma.video.count({ where: { status: "REJECTED" } }),
       this.prisma.video.count({ where: { status: "FAILED" } }),
     ]);
+
     return {
       trends,
       scripts,
@@ -69,6 +74,39 @@ export class ObservabilityQueryService {
         rejected: videosRejected,
         failed: videosFailed,
       },
+    };
+  }
+
+  // ✅ NEW: Batch 44 - Provider resilience evidence
+  async providerResilienceEvidence() {
+    const [success, failed, fallback] = await Promise.all([
+      this.prisma.providerJobLog.count({ where: { status: "SUCCESS" } }),
+      this.prisma.providerJobLog.count({ where: { status: "FAILED" } }),
+      this.prisma.providerJobLog.count({ where: { status: "FALLBACK_USED" } }),
+    ]);
+
+    const recent = await this.prisma.providerJobLog.findMany({
+      orderBy: { startedAt: "desc" },
+      take: 50,
+      include: {
+        video: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    return {
+      generatedAt: new Date().toISOString(),
+      summary: {
+        success,
+        failed,
+        fallback,
+      },
+      recent,
     };
   }
 }

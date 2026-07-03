@@ -1,10 +1,15 @@
-import { ProviderJobLogger } from "../../shared/provider-job-logger";
-import { providerFailures, providerFallbacks } from "../../shared/metrics";
+import { ProviderJobLogger } from "./provider-job-logger";
+import { providerFailures, providerFallbacks } from "./metrics";
 
-export async function runProviderStage<T>(input: {
+export async function runAuditedProviderStage<T>(input: {
   logger: ProviderJobLogger;
-  videoId: string;
-  jobType: "TTS" | "AVATAR_VIDEO" | "VIDEO_COMPOSITE" | "MODERATION";
+  videoId?: string;
+  jobType:
+    | "LLM_SCRIPT"
+    | "TTS"
+    | "AVATAR_VIDEO"
+    | "VIDEO_COMPOSITE"
+    | "MODERATION";
   providerName: string;
   serviceName: string;
   stage: string;
@@ -12,7 +17,7 @@ export async function runProviderStage<T>(input: {
   execute: () => Promise<T>;
   fallback?: () => Promise<T>;
   allowFallback: boolean;
-}): Promise<T> {
+}): Promise<{ result: T; fallbackUsed: boolean }> {
   const job = await input.logger.start({
     videoId: input.videoId,
     jobType: input.jobType,
@@ -27,7 +32,7 @@ export async function runProviderStage<T>(input: {
       responsePayload: result as Record<string, unknown>,
       fallbackUsed: false,
     });
-    return result;
+    return { result, fallbackUsed: false };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unknown provider failure";
@@ -39,7 +44,7 @@ export async function runProviderStage<T>(input: {
     });
 
     if (input.allowFallback && input.fallback) {
-      const fallbackResult = await input.fallback();
+      const result = await input.fallback();
       providerFallbacks.inc({
         service: input.serviceName,
         provider: input.providerName,
@@ -49,9 +54,9 @@ export async function runProviderStage<T>(input: {
         jobId: job.id,
         errorMessage: message,
         fallbackUsed: true,
-        responsePayload: fallbackResult as Record<string, unknown>,
+        responsePayload: result as Record<string, unknown>,
       });
-      return fallbackResult;
+      return { result, fallbackUsed: true };
     }
 
     await input.logger.fail({

@@ -5,6 +5,8 @@ import { KafkaTopics } from "../../../contracts/kafka-events";
 import { ModerateVideoRequest } from "../../../contracts/api-contracts";
 import { createModerationProvider } from "../../../ai/providers/provider-factory";
 import { ProviderJobLogger } from "../../shared/provider-job-logger";
+// ✅ NEW: Batch 44 - Import provider stage runner
+import { runAuditedProviderStage } from "../../shared/provider-stage-runner";
 
 // ✅ Define ModerationAction locally instead of importing from Prisma
 type ModerationAction = "ALLOW" | "LIMIT" | "REVIEW" | "BLOCK";
@@ -47,7 +49,9 @@ export class ModerationService {
       .filter(Boolean)
       .join("\n\n");
 
+    // ✅ Updated: Pass videoId to safeModerateWithProvider
     const providerResult = await this.safeModerateWithProvider({
+      videoId: video.id,
       title: video.title,
       text,
       videoUrl: video.videoUrl,
@@ -58,7 +62,6 @@ export class ModerationService {
 
     const action = providerResult.action as ModerationAction;
 
-    // ✅ Fixed: Use 'as any' for providerMetadata to bypass Prisma type checking
     const log = await this.prisma.moderationLog.create({
       data: {
         videoId: video.id,
@@ -234,7 +237,9 @@ export class ModerationService {
     return published;
   }
 
+  // ✅ Batch 44: Updated safeModerateWithProvider with runAuditedProviderStage
   private async safeModerateWithProvider(input: {
+    videoId: string;
     title: string;
     text: string;
     videoUrl: string | null;
@@ -248,79 +253,65 @@ export class ModerationService {
     metadata: Record<string, unknown>;
     fallbackUsed: boolean;
   }> {
-    const job = await this.providerJobLogger.start({
-      jobType: "MODERATION",
-      providerName: process.env.MODERATION_PROVIDER || "mock",
-      requestPayload: {
-        title: input.title,
-        category: input.category,
-        language: input.language,
-        hasVideoUrl: Boolean(input.videoUrl),
-        hasThumbnailUrl: Boolean(input.thumbnailUrl),
-      },
-    });
+    const providerName = process.env.MODERATION_PROVIDER || "mock";
+    const allowFallback =
+      process.env.ALLOW_MODERATION_FALLBACK === "true" ||
+      providerName === "mock";
 
     try {
-      const result = await this.moderationProvider.moderate(input);
-
-      await this.providerJobLogger.success({
-        jobId: job.id,
-        responsePayload: {
-          action: result.action,
-          score: result.score,
-          reason: result.reason,
+      const { result, fallbackUsed } = await runAuditedProviderStage({
+        logger: this.providerJobLogger,
+        videoId: input.videoId,
+        jobType: "MODERATION",
+        providerName,
+        serviceName: "moderation-service",
+        stage: "moderation",
+        allowFallback,
+        requestPayload: {
+          title: input.title,
+          category: input.category,
+          language: input.language,
+          hasVideoUrl: Boolean(input.videoUrl),
+          hasThumbnailUrl: Boolean(input.thumbnailUrl),
         },
+        execute: () =>
+          this.moderationProvider.moderate({
+            title: input.title,
+            text: input.text,
+            videoUrl: input.videoUrl,
+            thumbnailUrl: input.thumbnailUrl,
+            category: input.category,
+            language: input.language,
+          }),
+        fallback: async () =>
+          this.localFallbackModeration(input.title, input.text),
       });
 
       return {
         action: result.action,
         score: result.score,
         reason: result.reason,
-        metadata: result.metadata,
-        fallbackUsed: false,
+        metadata: {
+          ...result.metadata,
+          providerName,
+          safeFailure: fallbackUsed,
+        },
+        fallbackUsed,
       };
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : "Unknown moderation provider failure";
-
-      const allowFallback =
-        process.env.ALLOW_MODERATION_FALLBACK === "true" ||
-        process.env.MODERATION_PROVIDER === "mock";
-
-      await this.providerJobLogger.fail({
-        jobId: job.id,
-        errorMessage: message,
-        fallbackUsed: allowFallback,
-      });
-
-      if (!allowFallback) {
-        return {
-          action: "REVIEW",
-          score: 0.5,
-          reason: `Provider failed. Forced human review: ${message}`,
-          metadata: {
-            providerFailure: true,
-            safeFailure: true,
-          },
-          fallbackUsed: false,
-        };
-      }
-
-      const localFallback = this.localFallbackModeration(
-        input.title,
-        input.text,
-      );
       return {
-        ...localFallback,
+        action: "REVIEW",
+        score: 0.5,
+        reason: `Provider failed. Forced human review: ${message}`,
         metadata: {
-          ...localFallback.metadata,
           providerFailure: true,
-          providerFailureReason: message,
           safeFailure: true,
         },
-        fallbackUsed: true,
+        fallbackUsed: false,
       };
     }
   }
