@@ -59,9 +59,10 @@ export default function RootLayout({
               <Link href="/admin-users">Admin Users</Link>
               <Link href="/admin-audit-logs">Admin Audit Logs</Link>
               <Link href="/observability">Observability</Link>
-              {/* ✅ Added: Event Processing links (Batch 43) */}
               <Link href="/events">Event Processing</Link>
               <Link href="/events/evidence">Event Evidence</Link>
+              {/* ✅ Added: Batch 45 - Metrics Evidence */}
+              <Link href="/metrics">Metrics Evidence</Link>
             </nav>
           </aside>
           <main className="main">{children}</main>
