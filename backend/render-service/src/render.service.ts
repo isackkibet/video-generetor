@@ -8,6 +8,8 @@ import {
   RenderVideoRequest,
 } from "../../../contracts/api-contracts";
 import { MediaRenderPipeline } from "./media-render.pipeline";
+// ✅ Added: Batch 45 - Render queue metrics
+import { renderQueueSize } from "../../shared/metrics";
 
 type VideoStatus =
   | "DRAFT"
@@ -289,6 +291,20 @@ export class RenderService {
         }),
       );
     }
+
+    // ✅ Batch 45: Set render queue size metric
+    const remaining = await this.prisma.video.count({
+      where: {
+        status: "SCRIPTED",
+      },
+    });
+    renderQueueSize.set(
+      {
+        service: "render-service",
+      },
+      remaining,
+    );
+
     return rendered;
   }
 
