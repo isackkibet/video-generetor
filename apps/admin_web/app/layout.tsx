@@ -58,8 +58,10 @@ export default function RootLayout({
               <Link href="/script-provider-logs">Script Provider Logs</Link>
               <Link href="/admin-users">Admin Users</Link>
               <Link href="/admin-audit-logs">Admin Audit Logs</Link>
-              {/* ✅ Added: Observability link */}
               <Link href="/observability">Observability</Link>
+              {/* ✅ Added: Event Processing links (Batch 43) */}
+              <Link href="/events">Event Processing</Link>
+              <Link href="/events/evidence">Event Evidence</Link>
             </nav>
           </aside>
           <main className="main">{children}</main>
