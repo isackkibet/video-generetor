@@ -109,4 +109,61 @@ export class ObservabilityQueryService {
       recent,
     };
   }
+
+  // ✅ NEW: Batch 45 - Metrics evidence
+  async metricsEvidence() {
+    const [
+      moderationQueue,
+      renderQueue,
+      published,
+      failedProviderJobs,
+      fallbackProviderJobs,
+      failedEvents,
+      deadLetteredEvents,
+    ] = await Promise.all([
+      this.prisma.video.count({
+        where: {
+          status: "MODERATION",
+          videoUrl: { not: null },
+        },
+      }),
+      this.prisma.video.count({
+        where: { status: "SCRIPTED" },
+      }),
+      this.prisma.video.count({
+        where: { status: "PUBLISHED" },
+      }),
+      this.prisma.providerJobLog.count({
+        where: { status: "FAILED" },
+      }),
+      this.prisma.providerJobLog.count({
+        where: { fallbackUsed: true },
+      }),
+      this.prisma.eventProcessingLog.count({
+        where: { status: "FAILED" },
+      }),
+      this.prisma.eventProcessingLog.count({
+        where: { status: "DEAD_LETTERED" },
+      }),
+    ]);
+
+    return {
+      generatedAt: new Date().toISOString(),
+      queues: {
+        moderationQueue,
+        renderQueue,
+      },
+      content: {
+        published,
+      },
+      providers: {
+        failedProviderJobs,
+        fallbackProviderJobs,
+      },
+      events: {
+        failedEvents,
+        deadLetteredEvents,
+      },
+    };
+  }
 }
