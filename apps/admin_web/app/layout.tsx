@@ -61,8 +61,9 @@ export default function RootLayout({
               <Link href="/observability">Observability</Link>
               <Link href="/events">Event Processing</Link>
               <Link href="/events/evidence">Event Evidence</Link>
-              {/* ✅ Added: Batch 45 - Metrics Evidence */}
               <Link href="/metrics">Metrics Evidence</Link>
+              {/* ✅ Added: Batch 46 - Backup Evidence */}
+              <Link href="/backup">Backup Evidence</Link>
             </nav>
           </aside>
           <main className="main">{children}</main>
