@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const uuidSchema = z.string().uuid();
 
@@ -45,14 +45,14 @@ export const renderVideoSchema = z.object({
 export const listVideosQuerySchema = paginationQuerySchema.extend({
   status: z
     .enum([
-      'DRAFT',
-      'SCRIPTED',
-      'RENDERING',
-      'MODERATION',
-      'APPROVED',
-      'PUBLISHED',
-      'REJECTED',
-      'FAILED',
+      "DRAFT",
+      "SCRIPTED",
+      "RENDERING",
+      "MODERATION",
+      "APPROVED",
+      "PUBLISHED",
+      "REJECTED",
+      "FAILED",
     ])
     .optional(),
   category: z.string().optional(),
@@ -65,7 +65,7 @@ export const moderateVideoSchema = z.object({
 });
 
 export const moderationQueueQuerySchema = paginationQuerySchema.extend({
-  action: z.enum(['ALLOW', 'LIMIT', 'REVIEW', 'BLOCK']).optional(),
+  action: z.enum(["ALLOW", "LIMIT", "REVIEW", "BLOCK"]).optional(),
 });
 
 export const seedFeedQuerySchema = paginationQuerySchema.extend({
@@ -78,7 +78,15 @@ export const seedFeedQuerySchema = paginationQuerySchema.extend({
 export const feedEventSchema = z.object({
   userId: z.string().min(2).max(120),
   videoId: uuidSchema,
-  action: z.enum(['view', 'like', 'share', 'comment', 'save', 'skip', 'complete']),
+  action: z.enum([
+    "view",
+    "like",
+    "share",
+    "comment",
+    "save",
+    "skip",
+    "complete",
+  ]),
   watchMs: z.coerce.number().int().min(0).optional(),
   region: z.string().optional(),
   metadata: z.record(z.unknown()).optional(),
@@ -95,13 +103,21 @@ export const idParamSchema = z.object({
 export const providerJobsQuerySchema = paginationQuerySchema.extend({
   videoId: uuidSchema.optional(),
   jobType: z
-    .enum(['LLM_SCRIPT', 'TTS', 'AVATAR_VIDEO', 'VIDEO_COMPOSITE', 'MODERATION'])
+    .enum([
+      "LLM_SCRIPT",
+      "TTS",
+      "AVATAR_VIDEO",
+      "VIDEO_COMPOSITE",
+      "MODERATION",
+    ])
     .optional(),
   providerName: z.string().optional(),
-  status: z.enum(['PENDING', 'RUNNING', 'SUCCESS', 'FAILED', 'FALLBACK_USED']).optional(),
+  status: z
+    .enum(["PENDING", "RUNNING", "SUCCESS", "FAILED", "FALLBACK_USED"])
+    .optional(),
   fallbackUsed: z
-    .enum(['true', 'false'])
-    .transform((value) => value === 'true')
+    .enum(["true", "false"])
+    .transform((value) => value === "true")
     .optional(),
 });
 
@@ -109,10 +125,12 @@ export const scriptProviderLogsQuerySchema = paginationQuerySchema.extend({
   scriptId: uuidSchema.optional(),
   trendId: uuidSchema.optional(),
   providerName: z.string().optional(),
-  status: z.enum(['PENDING', 'RUNNING', 'SUCCESS', 'FAILED', 'FALLBACK_USED']).optional(),
+  status: z
+    .enum(["PENDING", "RUNNING", "SUCCESS", "FAILED", "FALLBACK_USED"])
+    .optional(),
   fallbackUsed: z
-    .enum(['true', 'false'])
-    .transform((value) => value === 'true')
+    .enum(["true", "false"])
+    .transform((value) => value === "true")
     .optional(),
 });
 
@@ -144,7 +162,7 @@ export const kafkaVideoRenderedSchema = z.object({
 
 export const kafkaVideoModeratedSchema = z.object({
   videoId: uuidSchema,
-  action: z.enum(['ALLOW', 'LIMIT', 'REVIEW', 'BLOCK']),
+  action: z.enum(["ALLOW", "LIMIT", "REVIEW", "BLOCK"]),
   score: z.number(),
   reason: z.string(),
 });
@@ -163,4 +181,15 @@ export const kafkaFeedEventCreatedSchema = z.object({
   action: z.string(),
   watchMs: z.number().nullable().optional(),
   region: z.string().nullable().optional(),
+});
+
+export const eventProcessingQuerySchema = paginationQuerySchema.extend({
+  topic: z.string().optional(),
+  status: z
+    .enum(["RUNNING", "SUCCESS", "FAILED", "RETRIED", "DEAD_LETTERED"])
+    .optional(),
+});
+
+export const retryEventSchema = z.object({
+  idempotencyKey: z.string().min(10),
 });
