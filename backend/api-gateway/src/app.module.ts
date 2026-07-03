@@ -6,11 +6,12 @@ import { GatewayService } from "./gateway.service";
 import { ProviderJobQueryService } from "../../shared/provider-job-query.service";
 import { ScriptProviderQueryService } from "../../shared/script-provider-query.service";
 import { ObservabilityQueryService } from "../../shared/observability-query.service";
-import { EventAdminService } from "../../shared/event-admin.service"; // ✅ NEW: Batch 43
+import { EventAdminService } from "../../shared/event-admin.service";
 import { PrismaService } from "../../shared/prisma.service";
 import { ApiGatewayKeyMiddleware } from "./api-key.middleware";
 import { RequestIdMiddleware } from "../../shared/request-id.middleware";
 import { RequestAuditMiddleware } from "../../shared/request-audit.middleware";
+import { HttpMetricsMiddleware } from "../../shared/http-metrics.middleware"; // ✅ Added Batch 45
 import { HealthController } from "../../shared/health.controller";
 import { MetricsController } from "../../shared/metrics.controller";
 import { RolesGuard } from "../../shared/roles.guard";
@@ -31,7 +32,7 @@ import { AdminJwtGuard } from "../../shared/admin-jwt.guard";
     ProviderJobQueryService,
     ScriptProviderQueryService,
     ObservabilityQueryService,
-    EventAdminService, // ✅ NEW: Batch 43
+    EventAdminService,
     PrismaService,
     RolesGuard,
     AdminJwtGuard,
@@ -47,6 +48,7 @@ export class AppModule implements NestModule {
       .apply(
         RequestIdMiddleware,
         RequestAuditMiddleware,
+        HttpMetricsMiddleware, // ✅ Added
         ApiGatewayKeyMiddleware,
       )
       .forRoutes("*");
