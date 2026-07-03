@@ -1,0 +1,28 @@
+name: Rollback Production
+on:
+  workflow_dispatch:
+    inputs:
+      deployment:
+        description: "Deployment name to rollback"
+        required: true
+        type: string
+      namespace:
+        description: "Kubernetes namespace"
+        required: true
+        default: "yohpal-live"
+        type: string
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.PRODUCTION_KUBECONFIG }}" > ~/.kube/config
+      - name: Rollback deployment
+        run: |
+          kubectl rollout undo deployment/${{ inputs.deployment }} -n ${{ inputs.namespace }}
+          kubectl rollout status deployment/${{ inputs.deployment }} -n ${{ inputs.namespace }}
+      - name: Verify health
+        run: kubectl get pods -n ${{ inputs.namespace }}
