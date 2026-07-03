@@ -4,6 +4,7 @@ import { TrendService } from "./trend.service";
 import { PrismaService } from "../../shared/prisma.service";
 import { ServiceAuthMiddleware } from "../../shared/service-auth.middleware";
 import { RequestIdMiddleware } from "../../shared/request-id.middleware";
+import { HttpMetricsMiddleware } from "../../shared/http-metrics.middleware";
 import { HealthController } from "../../shared/health.controller";
 
 @Module({
@@ -12,6 +13,8 @@ import { HealthController } from "../../shared/health.controller";
 })
 export class TrendModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RequestIdMiddleware, ServiceAuthMiddleware).forRoutes("*");
+    consumer
+      .apply(RequestIdMiddleware, HttpMetricsMiddleware, ServiceAuthMiddleware)
+      .forRoutes("*");
   }
 }
