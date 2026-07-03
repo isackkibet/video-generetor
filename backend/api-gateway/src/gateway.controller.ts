@@ -340,6 +340,17 @@ export class GatewayController {
     };
   }
 
+  // ✅ NEW: Batch 45 - Metrics evidence
+  @Get("observability/metrics-evidence")
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles("SUPER_ADMIN")
+  async metricsEvidence() {
+    return {
+      success: true,
+      data: await this.observabilityQueryService.metricsEvidence(),
+    };
+  }
+
   // ==================== EVENT PROCESSING (Batch 43) ====================
   @Get("events/processing")
   @UseGuards(AdminJwtGuard, RolesGuard)
