@@ -40,7 +40,8 @@ export const config = {
     "/admin-audit-logs/:path*",
     "/observability/:path*",
     "/events/:path*",
-    "/metrics/:path*", // ✅ Added: Batch 45
+    "/metrics/:path*",
+    "/backup/:path*", // ✅ Added: Batch 46
     "/api/admin/:path*",
   ],
 };
