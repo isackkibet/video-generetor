@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: yohpal_live_ai
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - yohpal_postgres_data:/var/lib/postgresql/data
     networks:
@@ -82,14 +82,15 @@ services:
     env_file:
       - ../.env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
+      DATABASE_URL: postgresql://postgres:postgres@yohpal_live_postgres:5432/yohpal_live_ai
+      REDIS_URL: redis://yohpal_live_redis:6379
       KAFKA_BROKERS: yohpal_live_kafka:9092
-      TREND_SERVICE_URL: http://trend-service:3001
-      SCRIPT_SERVICE_URL: http://script-service:3002
-      RENDER_SERVICE_URL: http://render-service:3003
-      MODERATION_SERVICE_URL: http://moderation-service:3004
-      RECOMMENDATION_SERVICE_URL: http://recommendation-service:3005
+      API_GATEWAY_PORT: 3000
+      TREND_SERVICE_URL: http://trend-service:3201
+      SCRIPT_SERVICE_URL: http://script-service:3202
+      RENDER_SERVICE_URL: http://render-service:3203
+      MODERATION_SERVICE_URL: http://moderation-service:3204
+      RECOMMENDATION_SERVICE_URL: http://recommendation-service:3205
     ports:
       - "3000:3000"
     depends_on:
@@ -121,11 +122,12 @@ services:
     env_file:
       - ../.env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
+      DATABASE_URL: postgresql://postgres:postgres@yohpal_live_postgres:5432/yohpal_live_ai
+      REDIS_URL: redis://yohpal_live_redis:6379
       KAFKA_BROKERS: yohpal_live_kafka:9092
+      TREND_SERVICE_PORT: 3201
     ports:
-      - "3001:3001"
+      - "3201:3201"
     depends_on:
       postgres:
         condition: service_healthy
@@ -143,11 +145,12 @@ services:
     env_file:
       - ../.env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
+      DATABASE_URL: postgresql://postgres:postgres@yohpal_live_postgres:5432/yohpal_live_ai
+      REDIS_URL: redis://yohpal_live_redis:6379
       KAFKA_BROKERS: yohpal_live_kafka:9092
+      SCRIPT_SERVICE_PORT: 3202
     ports:
-      - "3002:3002"
+      - "3202:3202"
     depends_on:
       postgres:
         condition: service_healthy
@@ -165,11 +168,12 @@ services:
     env_file:
       - ../.env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
+      DATABASE_URL: postgresql://postgres:postgres@yohpal_live_postgres:5432/yohpal_live_ai
+      REDIS_URL: redis://yohpal_live_redis:6379
       KAFKA_BROKERS: yohpal_live_kafka:9092
+      RENDER_SERVICE_PORT: 3203
     ports:
-      - "3003:3003"
+      - "3203:3203"
     depends_on:
       postgres:
         condition: service_healthy
@@ -187,11 +191,12 @@ services:
     env_file:
       - ../.env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
+      DATABASE_URL: postgresql://postgres:postgres@yohpal_live_postgres:5432/yohpal_live_ai
+      REDIS_URL: redis://yohpal_live_redis:6379
       KAFKA_BROKERS: yohpal_live_kafka:9092
+      MODERATION_SERVICE_PORT: 3204
     ports:
-      - "3004:3004"
+      - "3204:3204"
     depends_on:
       postgres:
         condition: service_healthy
@@ -209,11 +214,12 @@ services:
     env_file:
       - ../.env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
+      DATABASE_URL: postgresql://postgres:postgres@yohpal_live_postgres:5432/yohpal_live_ai
+      REDIS_URL: redis://yohpal_live_redis:6379
       KAFKA_BROKERS: yohpal_live_kafka:9092
+      RECOMMENDATION_SERVICE_PORT: 3205
     ports:
-      - "3005:3005"
+      - "3205:3205"
     depends_on:
       postgres:
         condition: service_healthy
