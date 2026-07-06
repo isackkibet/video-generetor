@@ -193,3 +193,77 @@ export const eventProcessingQuerySchema = paginationQuerySchema.extend({
 export const retryEventSchema = z.object({
   idempotencyKey: z.string().min(10),
 });
+// ============================================================
+// Recovery Governance Schemas (Batch 54)
+// ============================================================
+
+export const createRecoveryRepositorySchema = z.object({
+  code: z.string().min(2).max(20),
+  name: z.string().min(2).max(120),
+  owner: z.string().min(2).max(120),
+  repositoryPath: z.string().min(2).max(200),
+});
+
+export const updateRecoveryRepositorySchema = z.object({
+  status: z.enum(['NOT_STARTED', 'IN_PROGRESS', 'READY_FOR_REVIEW', 'CERTIFIED', 'BLOCKED']).optional(),
+  alignmentScore: z.coerce.number().int().min(0).max(100).optional(),
+  evidenceSubmitted: z.boolean().optional(),
+});
+
+export const upsertRecoveryBatchSchema = z.object({
+  repositoryId: z.string().uuid(),
+  batchNumber: z.coerce.number().int().min(39).max(99),
+  title: z.string().min(2).max(200),
+  status: z.enum(['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'NOT_APPLICABLE']),
+  evidenceIds: z.array(z.string()).optional(),
+  notes: z.string().optional(),
+});
+
+export const createRecoveryEvidenceSchema = z.object({
+  repositoryId: z.string().uuid(),
+  evidenceCode: z.string().min(6).max(80),
+  category: z.enum(['TEST', 'API', 'LOG', 'SCREENSHOT', 'METRICS', 'BACKUP', 'CERT', 'DEPLOY', 'SECURITY', 'OTHER']),
+  title: z.string().min(2).max(200),
+  description: z.string().optional(),
+  storageUrl: z.string().optional(),
+  submittedBy: z.string().optional(),
+});
+
+export const createRecoveryBlockerSchema = z.object({
+  repositoryId: z.string().uuid(),
+  blockerCode: z.string().min(6).max(80),
+  title: z.string().min(2).max(200),
+  description: z.string().min(2),
+  severity: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']),
+  owner: z.string().optional(),
+});
+
+export const createRecoveryRiskSchema = z.object({
+  repositoryId: z.string().uuid(),
+  riskCode: z.string().min(6).max(80),
+  title: z.string().min(2).max(200),
+  description: z.string().min(2),
+  severity: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']),
+  mitigation: z.string().optional(),
+  owner: z.string().optional(),
+});
+
+export const governanceStatusUpdateSchema = z.object({
+  status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'ACCEPTED', 'REJECTED']),
+  resolution: z.string().optional(),
+});
+
+export const certificationDecisionSchema = z.object({
+  repositoryId: z.string().uuid(),
+  certificationType: z.string().min(2).max(80),
+  decision: z.enum(['PENDING', 'APPROVED', 'REJECTED']),
+  reviewer: z.string().optional(),
+  comments: z.string().optional(),
+});
+
+export const executiveApprovalSchema = z.object({
+  releaseVersion: z.string().min(2).max(80),
+  decision: z.enum(['PENDING', 'APPROVED', 'REJECTED']),
+  approver: z.string().optional(),
+  comments: z.string().optional(),
+});
