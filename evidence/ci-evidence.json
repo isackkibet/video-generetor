@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-06T08:03:16.043Z",
+  "generatedAt": "2026-07-06T10:41:48.960Z",
   "source": "npm run ci:evidence",
   "checks": {
     "typecheck": "REQUIRED",

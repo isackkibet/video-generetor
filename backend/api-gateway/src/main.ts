@@ -6,6 +6,9 @@ import { AppModule } from "./app.module";
 import * as dotenv from "dotenv";
 dotenv.config({ path: "../../.env" });
 
+// 🔍 TEMP DEBUG — remove after diagnosing ADMIN_JWT_SECRET mismatch
+console.log("DEBUG ADMIN_JWT_SECRET:", process.env.ADMIN_JWT_SECRET);
+
 import { env } from "../../shared/env";
 
 async function bootstrap() {

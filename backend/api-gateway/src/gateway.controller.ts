@@ -439,6 +439,12 @@ export class GatewayController {
 
   // ==================== PIPELINE (Super Admin only) ====================
   @Post("pipeline/run-seed")
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles("SUPER_ADMIN")
+  async runSeedPipeline(@Query("take") take?: string) {
+    return this.gatewayService.runSeedPipeline(take || "10");
+  }
+
   // ✅ Batch 49 - Release gate
   @Get("certification/release-gate")
   @UseGuards(AdminJwtGuard, RolesGuard)
@@ -448,10 +454,5 @@ export class GatewayController {
       success: true,
       data: await this.releaseGateService.evaluate(),
     };
-  }
-  @UseGuards(AdminJwtGuard, RolesGuard)
-  @Roles("SUPER_ADMIN")
-  async runSeedPipeline(@Query("take") take?: string) {
-    return this.gatewayService.runSeedPipeline(take || "10");
   }
 }

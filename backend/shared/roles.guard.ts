@@ -12,10 +12,6 @@ export class RolesGuard implements CanActivate {
   private readonly reflector = new Reflector();
 
   canActivate(context: ExecutionContext): boolean {
-    if (process.env.NODE_ENV === "development") {
-      return true;
-    }
-
     const roles = this.reflector.getAllAndOverride<AdminRole[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
