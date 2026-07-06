@@ -52,6 +52,14 @@ export class RecoveryGovernanceController {
     return { success: true, data: await this.service.updateRepository(id, body) };
   }
 
+  @Post('repositories/:id/update')
+  async updateRepositoryPost(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateRecoveryRepositorySchema)) body: any
+  ) {
+    return { success: true, data: await this.service.updateRepository(id, body) };
+  }
+
   @Post('batches')
   async upsertBatch(
     @Body(new ZodValidationPipe(upsertRecoveryBatchSchema)) body: any
@@ -86,6 +94,14 @@ export class RecoveryGovernanceController {
     return { success: true, data: await this.service.updateBlocker(id, body) };
   }
 
+  @Post('blockers/:id/update')
+  async updateBlockerPost(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(governanceStatusUpdateSchema)) body: any
+  ) {
+    return { success: true, data: await this.service.updateBlocker(id, body) };
+  }
+
   @Post('risks')
   async createRisk(
     @Body(new ZodValidationPipe(createRecoveryRiskSchema)) body: any
@@ -95,6 +111,14 @@ export class RecoveryGovernanceController {
 
   @Patch('risks/:id')
   async updateRisk(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(governanceStatusUpdateSchema)) body: any
+  ) {
+    return { success: true, data: await this.service.updateRisk(id, body) };
+  }
+
+  @Post('risks/:id/update')
+  async updateRiskPost(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(governanceStatusUpdateSchema)) body: any
   ) {

@@ -67,7 +67,14 @@ export default function RootLayout({
               <Link href="/certification">Blueprint Certification</Link>
               <Link href="/release-gate">Release Gate</Link>
               <Link href="/program-management">Program Management</Link>
+              {/* ✅ Added: Batch 55 - Recovery Governance Admin CRUD */}
               <Link href="/program-management/data">Recovery Data</Link>
+              <Link href="/program-management/batches">Recovery Batches</Link>
+              <Link href="/program-management/evidence">Recovery Evidence</Link>
+              <Link href="/program-management/blockers">Recovery Blockers</Link>
+              <Link href="/program-management/risks">Recovery Risks</Link>
+              <Link href="/program-management/certification">Recovery Certification</Link>
+              <Link href="/program-management/executive">Executive Approval</Link>
             </nav>
           </aside>
           <main className="main">{children}</main>
