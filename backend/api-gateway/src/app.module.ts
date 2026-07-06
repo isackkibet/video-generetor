@@ -23,6 +23,7 @@ import { HealthController } from "../../shared/health.controller";
 import { MetricsController } from "../../shared/metrics.controller";
 import { RolesGuard } from "../../shared/roles.guard";
 import { AdminJwtGuard } from "../../shared/admin-jwt.guard";
+import { ExecutiveEvidenceService } from "../../shared/executive-evidence.service";
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { AdminJwtGuard } from "../../shared/admin-jwt.guard";
     BlueprintCertificationService,
     ProgramManagementService,
     RecoveryGovernanceService,
+    ExecutiveEvidenceService,
     PrismaService,
     RolesGuard,
     AdminJwtGuard,

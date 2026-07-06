@@ -77,6 +77,8 @@ export default function RootLayout({
               <Link href="/program-management/executive">Executive Approval</Link>
               {/* ✅ Added: Batch 57 - Recovery Exports */}
               <Link href="/program-management/exports">Recovery Exports</Link>
+              {/* ✅ Added: Batch 58 - Executive Bundle */}
+              <Link href="/program-management/executive-bundle">Executive Bundle</Link>
             </nav>
           </aside>
           <main className="main">{children}</main>

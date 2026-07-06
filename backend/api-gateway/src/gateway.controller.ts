@@ -5,8 +5,11 @@ import {
   Param,
   Post,
   Query,
+  Res,
   UseGuards,
 } from "@nestjs/common";
+import { Response } from 'express';
+import { ExecutiveEvidenceService } from "../../shared/executive-evidence.service";
 import { ZodValidationPipe } from "../../shared/validation";
 import { validateParams, validateQuery } from "../../shared/query-validation";
 import { GatewayService } from "./gateway.service";
@@ -59,6 +62,7 @@ export class GatewayController {
     private readonly backupEvidenceService: BackupEvidenceService,
     private readonly releaseGateService: ReleaseGateService,
     private readonly blueprintCertificationService: BlueprintCertificationService,
+    private readonly executiveEvidenceService: ExecutiveEvidenceService,
   ) {}
 
   // Public routes
@@ -454,5 +458,16 @@ export class GatewayController {
       success: true,
       data: await this.releaseGateService.evaluate(),
     };
+  }
+
+  // ✅ Batch 58 - Executive evidence bundle
+  @Get("exports/executive-bundle")
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles("SUPER_ADMIN")
+  async executiveBundle(@Res() res: Response) {
+    const data = await this.executiveEvidenceService.generateBundle();
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename="executive-evidence-bundle.json"');
+    return res.send(JSON.stringify(data, null, 2));
   }
 }

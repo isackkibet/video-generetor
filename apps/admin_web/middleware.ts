@@ -47,6 +47,7 @@ export const config = {
     "/program-management/:path*",
     "/program-management/data/:path*",
     "/program-management/exports/:path*", // ✅ Added: Batch 57
+    "/program-management/executive-bundle/:path*", // ✅ Added: Batch 58
     "/api/admin/:path*",
   ],
 };
