@@ -45,6 +45,8 @@ jobs:
       - run: npm run test:e2e
       - name: Run production readiness regression tests
         run: npm run test:production-readiness
+      - name: Run Recovery Governance Tests
+        run: npm run test:recovery-governance
       - name: Generate CI evidence
         run: npm run ci:evidence
       - name: Upload CI evidence
