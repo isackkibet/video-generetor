@@ -67,6 +67,7 @@ export default function RootLayout({
               <Link href="/certification">Blueprint Certification</Link>
               <Link href="/release-gate">Release Gate</Link>
               <Link href="/program-management">Program Management</Link>
+              <Link href="/program-management/data">Recovery Data</Link>
             </nav>
           </aside>
           <main className="main">{children}</main>

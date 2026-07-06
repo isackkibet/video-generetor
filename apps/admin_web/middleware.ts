@@ -45,6 +45,7 @@ export const config = {
     "/certification/:path*", // ✅ Added: Batch 48
     "/release-gate/:path*",
     "/program-management/:path*",
+    "/program-management/data/:path*",
     "/api/admin/:path*",
   ],
 };

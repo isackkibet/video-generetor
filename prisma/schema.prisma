@@ -385,3 +385,192 @@ model EventProcessingLog {
   @@index([status])
   @@index([createdAt])
 }
+// ============================================================
+// Recovery Governance Models (Batch 54)
+// ============================================================
+
+enum RecoveryRepositoryStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  READY_FOR_REVIEW
+  CERTIFIED
+  BLOCKED
+}
+
+enum RecoveryBatchStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  NOT_APPLICABLE
+}
+
+enum EvidenceCategory {
+  TEST
+  API
+  LOG
+  SCREENSHOT
+  METRICS
+  BACKUP
+  CERT
+  DEPLOY
+  SECURITY
+  OTHER
+}
+
+enum GovernanceSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum GovernanceItemStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  ACCEPTED
+  REJECTED
+}
+
+enum CertificationDecision {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model RecoveryRepository {
+  id                String                     @id @default(uuid())
+  code              String                     @unique
+  name              String
+  owner             String
+  repositoryPath    String
+  status            RecoveryRepositoryStatus   @default(NOT_STARTED)
+  alignmentScore    Int                        @default(0)
+  evidenceSubmitted Boolean                    @default(false)
+  certifiedAt       DateTime?
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+
+  batches           RecoveryBatchCompletion[]
+  evidence          RecoveryEvidence[]
+  blockers          RecoveryBlocker[]
+  risks             RecoveryRisk[]
+  certifications    RecoveryCertification[]
+
+  @@index([status])
+  @@index([alignmentScore])
+}
+
+model RecoveryBatchCompletion {
+  id             String               @id @default(uuid())
+  repositoryId   String
+  batchNumber    Int
+  title          String
+  status         RecoveryBatchStatus  @default(NOT_STARTED)
+  evidenceIds    String[]             @default([])
+  notes          String?
+  completedAt    DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  repository     RecoveryRepository   @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, batchNumber])
+  @@index([batchNumber])
+  @@index([status])
+}
+
+model RecoveryEvidence {
+  id             String            @id @default(uuid())
+  evidenceCode   String            @unique
+  repositoryId   String
+  category       EvidenceCategory
+  title          String
+  description    String?
+  storageUrl     String?
+  submittedBy    String?
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  accepted       Boolean           @default(false)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  repository     RecoveryRepository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@index([repositoryId])
+  @@index([category])
+  @@index([accepted])
+}
+
+model RecoveryBlocker {
+  id             String               @id @default(uuid())
+  blockerCode    String               @unique
+  repositoryId   String
+  title          String
+  description    String
+  severity       GovernanceSeverity
+  status         GovernanceItemStatus @default(OPEN)
+  owner          String?
+  resolution     String?
+  resolvedAt     DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  repository     RecoveryRepository   @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@index([severity])
+  @@index([status])
+}
+
+model RecoveryRisk {
+  id             String               @id @default(uuid())
+  riskCode       String               @unique
+  repositoryId   String
+  title          String
+  description    String
+  severity       GovernanceSeverity
+  status         GovernanceItemStatus @default(OPEN)
+  mitigation     String?
+  owner          String?
+  acceptedBy     String?
+  acceptedAt     DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  repository     RecoveryRepository   @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@index([severity])
+  @@index([status])
+}
+
+model RecoveryCertification {
+  id                 String               @id @default(uuid())
+  repositoryId       String
+  certificationType  String
+  decision           CertificationDecision @default(PENDING)
+  reviewer           String?
+  comments           String?
+  decidedAt          DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  repository         RecoveryRepository   @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@index([decision])
+  @@index([certificationType])
+}
+
+model ExecutiveRecoveryApproval {
+  id              String               @id @default(uuid())
+  releaseVersion  String
+  decision        CertificationDecision @default(PENDING)
+  approver        String?
+  comments        String?
+  decidedAt       DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@index([releaseVersion])
+  @@index([decision])
+}
