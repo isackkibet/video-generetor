@@ -1,0 +1,160 @@
+{
+  "generatedAt": "2026-07-06T06:42:28.113Z",
+  "blueprint": "YohPal Live AI Content Factory",
+  "estimatedAlignmentPercent": 74,
+  "productionDecision": "NOT_READY_FOR_PRODUCTION",
+  "areas": [
+    {
+      "area": "Database & Persistence",
+      "status": "PASS",
+      "score": 100,
+      "evidence": {
+        "trends": 117,
+        "scripts": 16,
+        "videos": 9
+      },
+      "blockers": []
+    },
+    {
+      "area": "Seed Content Pipeline",
+      "status": "PARTIAL",
+      "score": 75,
+      "evidence": {
+        "published": 0,
+        "scripted": 0,
+        "moderation": 3
+      },
+      "blockers": [
+        "Run async seed pipeline until at least one moderated video reaches PUBLISHED."
+      ]
+    },
+    {
+      "area": "Provider Auditability",
+      "status": "FAIL",
+      "score": 40,
+      "evidence": {
+        "total": 0,
+        "failed": 0,
+        "fallback": 0
+      },
+      "blockers": [
+        "ProviderJobLog has no evidence. Run render/moderation provider stages."
+      ]
+    },
+    {
+      "area": "Event-Driven Kafka Processing",
+      "status": "FAIL",
+      "score": 35,
+      "evidence": {
+        "total": 0,
+        "success": 0,
+        "failed": 0,
+        "deadLettered": 0
+      },
+      "blockers": [
+        "No EventProcessingLog evidence. Enable workers and run async pipeline."
+      ]
+    },
+    {
+      "area": "Moderation & Publishing Gate",
+      "status": "PARTIAL",
+      "score": 70,
+      "evidence": {
+        "logs": 6,
+        "rejected": 6,
+        "approved": 0
+      },
+      "blockers": [
+        "Moderation logs or approved/published content evidence is missing."
+      ]
+    },
+    {
+      "area": "Recommendation, Viral Scoring & Learning",
+      "status": "PARTIAL",
+      "score": 70,
+      "evidence": {
+        "feedEvents": 0,
+        "profiles": 0,
+        "scores": 0
+      },
+      "blockers": [
+        "VideoScore evidence missing. Run render job creation with viral scoring."
+      ]
+    },
+    {
+      "area": "Authentication, RBAC & Admin Audit",
+      "status": "PASS",
+      "score": 95,
+      "evidence": {
+        "admins": 1,
+        "auditLogs": 0,
+        "secretsConfigured": true
+      },
+      "blockers": []
+    },
+    {
+      "area": "Observability & Metrics",
+      "status": "PASS",
+      "score": 95,
+      "evidence": {
+        "queues": {
+          "moderationQueue": 3,
+          "renderQueue": 0
+        },
+        "content": {
+          "published": 0
+        }
+      },
+      "blockers": []
+    },
+    {
+      "area": "Backup, Restore & Rollback Readiness",
+      "status": "PASS",
+      "score": 90,
+      "evidence": {
+        "backupPolicy": {
+          "postgresSchedule": "Every 6 hours",
+          "retention": "30 days recommended",
+          "storage": "External object storage",
+          "verification": "Restore test required"
+        },
+        "kubernetes": {
+          "cronJob": "postgres-backup",
+          "namespace": "yohpal-live",
+          "restoreJob": "postgres-restore"
+        },
+        "certificationRequired": true
+      },
+      "blockers": []
+    }
+  ],
+  "blockers": [
+    {
+      "area": "Seed Content Pipeline",
+      "blocker": "Run async seed pipeline until at least one moderated video reaches PUBLISHED."
+    },
+    {
+      "area": "Provider Auditability",
+      "blocker": "ProviderJobLog has no evidence. Run render/moderation provider stages."
+    },
+    {
+      "area": "Event-Driven Kafka Processing",
+      "blocker": "No EventProcessingLog evidence. Enable workers and run async pipeline."
+    },
+    {
+      "area": "Moderation & Publishing Gate",
+      "blocker": "Moderation logs or approved/published content evidence is missing."
+    },
+    {
+      "area": "Recommendation, Viral Scoring & Learning",
+      "blocker": "VideoScore evidence missing. Run render job creation with viral scoring."
+    }
+  ],
+  "requiredNextActions": [
+    "Run async seed pipeline until at least one moderated video reaches PUBLISHED.",
+    "ProviderJobLog has no evidence. Run render/moderation provider stages.",
+    "No EventProcessingLog evidence. Enable workers and run async pipeline.",
+    "Moderation logs or approved/published content evidence is missing.",
+    "VideoScore evidence missing. Run render job creation with viral scoring."
+  ]
+}
