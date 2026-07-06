@@ -267,3 +267,8 @@ export const executiveApprovalSchema = z.object({
   approver: z.string().optional(),
   comments: z.string().optional(),
 });
+
+// ✅ Added: Batch 57 – Export format query
+export const exportFormatQuerySchema = z.object({
+  format: z.enum(['json', 'csv']).optional()
+});
