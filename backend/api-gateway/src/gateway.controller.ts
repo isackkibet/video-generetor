@@ -14,8 +14,8 @@ import { ProviderJobQueryService } from "../../shared/provider-job-query.service
 import { ScriptProviderQueryService } from "../../shared/script-provider-query.service";
 import { ObservabilityQueryService } from "../../shared/observability-query.service";
 import { EventAdminService } from "../../shared/event-admin.service";
-// ✅ NEW: Batch 46
 import { BackupEvidenceService } from "../../shared/backup-evidence.service";
+import { BlueprintCertificationService } from "../../shared/blueprint-certification.service";
 import { AdminJwtGuard } from "../../shared/admin-jwt.guard";
 import { RolesGuard } from "../../shared/roles.guard";
 import { Roles } from "../../shared/roles.decorator";
@@ -55,8 +55,8 @@ export class GatewayController {
     private readonly scriptProviderQueryService: ScriptProviderQueryService,
     private readonly observabilityQueryService: ObservabilityQueryService,
     private readonly eventAdminService: EventAdminService,
-    // ✅ NEW: Batch 46
     private readonly backupEvidenceService: BackupEvidenceService,
+    private readonly blueprintCertificationService: BlueprintCertificationService,
   ) {}
 
   // Public routes
@@ -333,7 +333,7 @@ export class GatewayController {
     return { success: true, data };
   }
 
-  // ✅ NEW: Batch 44 - Provider resilience evidence
+  // ✅ Batch 44 - Provider resilience evidence
   @Get("observability/provider-resilience-evidence")
   @UseGuards(AdminJwtGuard, RolesGuard)
   @Roles("SUPER_ADMIN")
@@ -344,7 +344,7 @@ export class GatewayController {
     };
   }
 
-  // ✅ NEW: Batch 45 - Metrics evidence
+  // ✅ Batch 45 - Metrics evidence
   @Get("observability/metrics-evidence")
   @UseGuards(AdminJwtGuard, RolesGuard)
   @Roles("SUPER_ADMIN")
@@ -355,7 +355,7 @@ export class GatewayController {
     };
   }
 
-  // ✅ NEW: Batch 46 - Backup evidence
+  // ✅ Batch 46 - Backup evidence
   @Get("observability/backup-evidence")
   @UseGuards(AdminJwtGuard, RolesGuard)
   @Roles("SUPER_ADMIN")
@@ -363,6 +363,17 @@ export class GatewayController {
     return {
       success: true,
       data: await this.backupEvidenceService.getBackupEvidence(),
+    };
+  }
+
+  // ✅ Batch 48 - Blueprint certification
+  @Get("certification/blueprint-alignment")
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles("SUPER_ADMIN")
+  async blueprintAlignmentReport() {
+    return {
+      success: true,
+      data: await this.blueprintCertificationService.generateReport(),
     };
   }
 
