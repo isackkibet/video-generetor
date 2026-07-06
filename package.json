@@ -15,7 +15,9 @@
     "typecheck": "tsc --noEmit",
     "ci": "npm run typecheck && npm run test && npm run test:e2e",
     "certification:enforce": "ts-node scripts/enforce-blueprint-alignment.ts",
-    "certification:go-no-go": "npm run certification:blueprint && npm run certification:enforce"
+    "certification:go-no-go": "npm run certification:blueprint && npm run certification:enforce",
+    "evidence:executive-bundle": "ts-node scripts/generate-executive-evidence-bundle.ts",
+    "evidence:full": "npm run certification:blueprint && npm run certification:go-no-go && npm run ci:evidence && npm run evidence:executive-bundle"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",
