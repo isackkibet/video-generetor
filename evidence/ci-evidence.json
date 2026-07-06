@@ -1,0 +1,12 @@
+{
+  "generatedAt": "2026-07-06T05:52:27.987Z",
+  "source": "npm run ci:evidence",
+  "checks": {
+    "typecheck": "REQUIRED",
+    "unitTests": "REQUIRED",
+    "e2eTests": "REQUIRED",
+    "prismaGenerate": "REQUIRED",
+    "prismaValidate": "REQUIRED"
+  },
+  "status": "PENDING_CI_OUTPUT_ATTACHMENT"
+}
