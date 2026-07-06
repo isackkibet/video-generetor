@@ -10,6 +10,8 @@ import { EventAdminService } from "../../shared/event-admin.service";
 import { BackupEvidenceService } from "../../shared/backup-evidence.service";
 import { ReleaseGateService } from "../../shared/release-gate.service";
 import { BlueprintCertificationService } from "../../shared/blueprint-certification.service";
+import { ProgramManagementController } from "./program-management.controller";
+import { ProgramManagementService } from "../../shared/program-management.service";
 import { PrismaService } from "../../shared/prisma.service";
 import { ApiGatewayKeyMiddleware } from "./api-key.middleware";
 import { RequestIdMiddleware } from "../../shared/request-id.middleware";
@@ -29,7 +31,7 @@ import { AdminJwtGuard } from "../../shared/admin-jwt.guard";
       },
     ]),
   ],
-  controllers: [GatewayController, HealthController, MetricsController],
+  controllers: [GatewayController, HealthController, MetricsController, ProgramManagementController],
   providers: [
     GatewayService,
     ProviderJobQueryService,
@@ -39,6 +41,7 @@ import { AdminJwtGuard } from "../../shared/admin-jwt.guard";
     BackupEvidenceService,
     ReleaseGateService,
     BlueprintCertificationService,
+    ProgramManagementService,
     PrismaService,
     RolesGuard,
     AdminJwtGuard,

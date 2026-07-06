@@ -66,6 +66,7 @@ export default function RootLayout({
               {/* ✅ Added: Batch 48 - Blueprint Certification */}
               <Link href="/certification">Blueprint Certification</Link>
               <Link href="/release-gate">Release Gate</Link>
+              <Link href="/program-management">Program Management</Link>
             </nav>
           </aside>
           <main className="main">{children}</main>
