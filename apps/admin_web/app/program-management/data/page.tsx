@@ -1,46 +1,51 @@
-import { apiGet, apiPost, ApiResponse } from '../../../lib/api';
+import { apiGet, ApiResponse } from '../../../lib/api';
+import { FlashMessage } from '../../../components/FlashMessage';
 import { requireAdminSession, canAccess } from '../../../lib/auth';
+import {
+  seedRecoveryRepositoriesAction,
+  createRecoveryRepositoryAction,
+  updateRecoveryRepositoryAction
+} from '../../../lib/recovery-governance-actions';
 
-type DashboardData = {
-  generatedAt: string;
-  repositories: {
-    id: string;
-    code: string;
-    name: string;
-    owner: string;
-    status: string;
-    alignmentScore: number;
-    evidenceSubmitted: boolean;
-  }[];
+type Repo = {
+  id: string;
+  code: string;
+  name: string;
+  owner: string;
+  repositoryPath: string;
+  status: string;
+  alignmentScore: number;
+  evidenceSubmitted: boolean;
+};
+
+type Dashboard = {
   summary: {
     repositoriesTotal: number;
     repositoriesCertified: number;
     avgAlignment: number;
-    blockersTotal: number;
     highOpenBlockers: number;
-    risksTotal: number;
     evidenceSubmitted: number;
     evidenceAccepted: number;
     executiveReadinessScore: number;
     decision: 'GO' | 'NO-GO';
   };
+  repositories: Repo[];
 };
 
 async function getDashboard() {
   try {
-    const response = await apiGet<ApiResponse<DashboardData>>('/recovery-governance/dashboard');
+    const response = await apiGet<ApiResponse<Dashboard>>('/recovery-governance/dashboard');
     return response.data;
   } catch {
     return null;
   }
 }
 
-async function seedRepositories() {
-  'use server';
-  await apiPost('/recovery-governance/seed');
-}
-
-export default async function RecoveryGovernanceDataPage() {
+export default async function ProgramManagementDataPage({
+  searchParams
+}: {
+  searchParams: { success?: string; error?: string };
+}) {
   const session = requireAdminSession();
   if (!canAccess(session.role, 'ADMIN')) {
     return (
@@ -51,15 +56,18 @@ export default async function RecoveryGovernanceDataPage() {
   }
 
   const dashboard = await getDashboard();
+  const repositories = dashboard?.repositories || [];
 
   return (
     <>
       <section className="header">
         <h1>Recovery Governance Data Center</h1>
-        <p>Database-backed recovery tracking, evidence, risks, blockers, and certification status.</p>
+        <p>Manage repository recovery status, alignment score, and evidence submission.</p>
       </section>
 
-      <form action={seedRepositories} className="actions">
+      <FlashMessage success={searchParams.success} error={searchParams.error} />
+
+      <form action={seedRecoveryRepositoriesAction} className="actions">
         <button type="submit">Seed Default Repositories</button>
       </form>
 
@@ -85,7 +93,18 @@ export default async function RecoveryGovernanceDataPage() {
       </section>
 
       <section className="card" style={{ marginTop: 20 }}>
-        <h3>Repository Recovery Records</h3>
+        <h3>Create Repository</h3>
+        <form action={createRecoveryRepositoryAction} className="grid">
+          <input name="code" placeholder="Code e.g. GW" required />
+          <input name="name" placeholder="Repository name" required />
+          <input name="owner" placeholder="Owner" required />
+          <input name="repositoryPath" placeholder="Path e.g. backend/api-gateway" required />
+          <button type="submit">Create Repository</button>
+        </form>
+      </section>
+
+      <section className="card" style={{ marginTop: 20 }}>
+        <h3>Repository Records</h3>
         <table className="table">
           <thead>
             <tr>
@@ -95,17 +114,42 @@ export default async function RecoveryGovernanceDataPage() {
               <th>Status</th>
               <th>Alignment</th>
               <th>Evidence</th>
+              <th>Update</th>
             </tr>
           </thead>
           <tbody>
-            {(dashboard?.repositories || []).map((repo) => (
+            {repositories.map((repo) => (
               <tr key={repo.id}>
                 <td>{repo.code}</td>
-                <td>{repo.name}</td>
+                <td>{repo.name}<br /><small>{repo.repositoryPath}</small></td>
                 <td>{repo.owner}</td>
                 <td>{repo.status}</td>
                 <td>{repo.alignmentScore}%</td>
                 <td>{repo.evidenceSubmitted ? 'Submitted' : 'Pending'}</td>
+                <td>
+                  <form action={updateRecoveryRepositoryAction} className="actions">
+                    <input type="hidden" name="id" value={repo.id} />
+                    <select name="status" defaultValue={repo.status}>
+                      <option value="NOT_STARTED">NOT_STARTED</option>
+                      <option value="IN_PROGRESS">IN_PROGRESS</option>
+                      <option value="READY_FOR_REVIEW">READY_FOR_REVIEW</option>
+                      <option value="CERTIFIED">CERTIFIED</option>
+                      <option value="BLOCKED">BLOCKED</option>
+                    </select>
+                    <input
+                      name="alignmentScore"
+                      type="number"
+                      min="0"
+                      max="100"
+                      defaultValue={repo.alignmentScore}
+                    />
+                    <select name="evidenceSubmitted" defaultValue={String(repo.evidenceSubmitted)}>
+                      <option value="false">Evidence Pending</option>
+                      <option value="true">Evidence Submitted</option>
+                    </select>
+                    <button type="submit">Save</button>
+                  </form>
+                </td>
               </tr>
             ))}
           </tbody>
