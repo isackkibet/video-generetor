@@ -62,8 +62,9 @@ export default function RootLayout({
               <Link href="/events">Event Processing</Link>
               <Link href="/events/evidence">Event Evidence</Link>
               <Link href="/metrics">Metrics Evidence</Link>
-              {/* ✅ Added: Batch 46 - Backup Evidence */}
               <Link href="/backup">Backup Evidence</Link>
+              {/* ✅ Added: Batch 48 - Blueprint Certification */}
+              <Link href="/certification">Blueprint Certification</Link>
             </nav>
           </aside>
           <main className="main">{children}</main>
