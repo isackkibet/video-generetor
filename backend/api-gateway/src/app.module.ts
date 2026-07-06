@@ -8,6 +8,7 @@ import { ScriptProviderQueryService } from "../../shared/script-provider-query.s
 import { ObservabilityQueryService } from "../../shared/observability-query.service";
 import { EventAdminService } from "../../shared/event-admin.service";
 import { BackupEvidenceService } from "../../shared/backup-evidence.service";
+import { ReleaseGateService } from "../../shared/release-gate.service";
 import { BlueprintCertificationService } from "../../shared/blueprint-certification.service";
 import { PrismaService } from "../../shared/prisma.service";
 import { ApiGatewayKeyMiddleware } from "./api-key.middleware";
@@ -36,6 +37,7 @@ import { AdminJwtGuard } from "../../shared/admin-jwt.guard";
     ObservabilityQueryService,
     EventAdminService,
     BackupEvidenceService,
+    ReleaseGateService,
     BlueprintCertificationService,
     PrismaService,
     RolesGuard,

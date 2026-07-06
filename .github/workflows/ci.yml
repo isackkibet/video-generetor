@@ -52,3 +52,17 @@ jobs:
         with:
           name: yohpal-live-ci-evidence
           path: evidence/ci-evidence.json
+
+      - name: Generate Blueprint Alignment Report
+        run: npm run certification:blueprint
+
+      - name: Enforce 90 Percent Blueprint Alignment Gate
+        run: npm run certification:enforce
+
+      - name: Upload Blueprint Certification Evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: blueprint-alignment-certification
+          path: |
+            evidence/blueprint-alignment-report.json
+            evidence/blueprint-alignment-report.md

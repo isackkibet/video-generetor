@@ -15,6 +15,7 @@ import { ScriptProviderQueryService } from "../../shared/script-provider-query.s
 import { ObservabilityQueryService } from "../../shared/observability-query.service";
 import { EventAdminService } from "../../shared/event-admin.service";
 import { BackupEvidenceService } from "../../shared/backup-evidence.service";
+import { ReleaseGateService } from "../../shared/release-gate.service";
 import { BlueprintCertificationService } from "../../shared/blueprint-certification.service";
 import { AdminJwtGuard } from "../../shared/admin-jwt.guard";
 import { RolesGuard } from "../../shared/roles.guard";
@@ -56,6 +57,7 @@ export class GatewayController {
     private readonly observabilityQueryService: ObservabilityQueryService,
     private readonly eventAdminService: EventAdminService,
     private readonly backupEvidenceService: BackupEvidenceService,
+    private readonly releaseGateService: ReleaseGateService,
     private readonly blueprintCertificationService: BlueprintCertificationService,
   ) {}
 
@@ -437,6 +439,16 @@ export class GatewayController {
 
   // ==================== PIPELINE (Super Admin only) ====================
   @Post("pipeline/run-seed")
+  // ✅ Batch 49 - Release gate
+  @Get("certification/release-gate")
+  @UseGuards(AdminJwtGuard, RolesGuard)
+  @Roles("SUPER_ADMIN")
+  async releaseGate() {
+    return {
+      success: true,
+      data: await this.releaseGateService.evaluate(),
+    };
+  }
   @UseGuards(AdminJwtGuard, RolesGuard)
   @Roles("SUPER_ADMIN")
   async runSeedPipeline(@Query("take") take?: string) {

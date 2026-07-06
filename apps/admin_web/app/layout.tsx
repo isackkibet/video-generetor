@@ -65,6 +65,7 @@ export default function RootLayout({
               <Link href="/backup">Backup Evidence</Link>
               {/* ✅ Added: Batch 48 - Blueprint Certification */}
               <Link href="/certification">Blueprint Certification</Link>
+              <Link href="/release-gate">Release Gate</Link>
             </nav>
           </aside>
           <main className="main">{children}</main>

@@ -1,0 +1,63 @@
+name: Production GO NO-GO Gate
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Release version"
+        required: true
+        type: string
+      executive_approval:
+        description: "Executive approval confirmation"
+        required: true
+        type: choice
+        options:
+          - "NO"
+          - "YES"
+jobs:
+  go-no-go:
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: production
+      MIN_BLUEPRINT_ALIGNMENT: "90"
+      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      REDIS_URL: ${{ secrets.PRODUCTION_REDIS_URL }}
+      ADMIN_JWT_SECRET: ${{ secrets.PRODUCTION_ADMIN_JWT_SECRET }}
+      API_GATEWAY_KEY: ${{ secrets.PRODUCTION_API_GATEWAY_KEY }}
+      SERVICE_AUTH_KEY: ${{ secrets.PRODUCTION_SERVICE_AUTH_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Block if executive approval missing
+        if: ${{ inputs.executive_approval != 'YES' }}
+        run: |
+          echo "NO-GO: Executive approval is required."
+          exit 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Generate Prisma Client
+        run: npx prisma generate
+      - name: Generate Blueprint Certification Report
+        run: npm run certification:blueprint
+      - name: Enforce 90 Percent Blueprint Alignment
+        run: npm run certification:enforce
+      - name: Create GO Decision Evidence
+        run: |
+          mkdir -p evidence
+          cat > evidence/go-no-go-decision.json << EOS
+          {
+            "releaseVersion": "${{ inputs.release_version }}",
+            "executiveApproval": "${{ inputs.executive_approval }}",
+            "decision": "GO",
+            "generatedAt": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          }
+          EOS
+      - name: Upload GO NO-GO Evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-go-no-go-evidence
+          path: |
+            evidence/blueprint-alignment-report.json
+            evidence/blueprint-alignment-report.md
+            evidence/go-no-go-decision.json

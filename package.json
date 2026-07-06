@@ -12,7 +12,9 @@
     "ci:production-readiness": "npm run typecheck && npm run test:production-readiness && npm run test:e2e && npm run ci:evidence",
     "certification:blueprint": "ts-node scripts/generate-blueprint-certification-report.ts",
     "typecheck": "tsc --noEmit",
-    "ci": "npm run typecheck && npm run test && npm run test:e2e"
+    "ci": "npm run typecheck && npm run test && npm run test:e2e",
+    "certification:enforce": "ts-node scripts/enforce-blueprint-alignment.ts",
+    "certification:go-no-go": "npm run certification:blueprint && npm run certification:enforce"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",
