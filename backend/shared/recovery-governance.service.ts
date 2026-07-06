@@ -242,4 +242,210 @@ export class RecoveryGovernanceService {
       },
     };
   }
+
+  // ========== Exports ==========
+  private toCsv(rows: Record<string, unknown>[]): string {
+    if (rows.length === 0) return '';
+    const headers = Object.keys(rows[0]);
+    const escape = (value: unknown) => {
+      if (value === null || value === undefined) return '';
+      const text = String(value).replace(/"/g, '""');
+      return `"${text}"`;
+    };
+    return [
+      headers.join(','),
+      ...rows.map(row => headers.map(header => escape(row[header])).join(','))
+    ].join('\n');
+  }
+
+  async exportRepositories(format: 'json' | 'csv' = 'json') {
+    const repositories = await this.prisma.recoveryRepository.findMany({
+      orderBy: { name: 'asc' }
+    });
+    const rows = repositories.map((repo: any) => ({
+      id: repo.id,
+      code: repo.code,
+      name: repo.name,
+      owner: repo.owner,
+      repositoryPath: repo.repositoryPath,
+      status: repo.status,
+      alignmentScore: repo.alignmentScore,
+      evidenceSubmitted: repo.evidenceSubmitted,
+      certifiedAt: repo.certifiedAt?.toISOString() || '',
+      updatedAt: repo.updatedAt.toISOString()
+    }));
+    return format === 'csv' ? this.toCsv(rows) : rows;
+  }
+
+  async exportBatches(format: 'json' | 'csv' = 'json') {
+    const batches = await this.prisma.recoveryBatchCompletion.findMany({
+      include: { repository: true },
+      orderBy: [{ batchNumber: 'asc' }, { updatedAt: 'desc' }]
+    });
+    const rows = batches.map((batch: any) => ({
+      repositoryCode: batch.repository.code,
+      repositoryName: batch.repository.name,
+      batchNumber: batch.batchNumber,
+      title: batch.title,
+      status: batch.status,
+      evidenceIds: batch.evidenceIds.join(';'),
+      completedAt: batch.completedAt?.toISOString() || '',
+      notes: batch.notes || '',
+      updatedAt: batch.updatedAt.toISOString()
+    }));
+    return format === 'csv' ? this.toCsv(rows) : rows;
+  }
+
+  async exportEvidence(format: 'json' | 'csv' = 'json') {
+    const evidence = await this.prisma.recoveryEvidence.findMany({
+      include: { repository: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    const rows = evidence.map((item: any) => ({
+      evidenceCode: item.evidenceCode,
+      repositoryCode: item.repository.code,
+      repositoryName: item.repository.name,
+      category: item.category,
+      title: item.title,
+      description: item.description || '',
+      storageUrl: item.storageUrl || '',
+      submittedBy: item.submittedBy || '',
+      accepted: item.accepted,
+      reviewedBy: item.reviewedBy || '',
+      reviewedAt: item.reviewedAt?.toISOString() || '',
+      createdAt: item.createdAt.toISOString()
+    }));
+    return format === 'csv' ? this.toCsv(rows) : rows;
+  }
+
+  async exportBlockers(format: 'json' | 'csv' = 'json') {
+    const blockers = await this.prisma.recoveryBlocker.findMany({
+      include: { repository: true },
+      orderBy: [{ severity: 'asc' }, { updatedAt: 'desc' }]
+    });
+    const rows = blockers.map((item: any) => ({
+      blockerCode: item.blockerCode,
+      repositoryCode: item.repository.code,
+      repositoryName: item.repository.name,
+      title: item.title,
+      description: item.description,
+      severity: item.severity,
+      status: item.status,
+      owner: item.owner || '',
+      resolution: item.resolution || '',
+      resolvedAt: item.resolvedAt?.toISOString() || '',
+      updatedAt: item.updatedAt.toISOString()
+    }));
+    return format === 'csv' ? this.toCsv(rows) : rows;
+  }
+
+  async exportRisks(format: 'json' | 'csv' = 'json') {
+    const risks = await this.prisma.recoveryRisk.findMany({
+      include: { repository: true },
+      orderBy: [{ severity: 'asc' }, { updatedAt: 'desc' }]
+    });
+    const rows = risks.map((item: any) => ({
+      riskCode: item.riskCode,
+      repositoryCode: item.repository.code,
+      repositoryName: item.repository.name,
+      title: item.title,
+      description: item.description,
+      severity: item.severity,
+      status: item.status,
+      mitigation: item.mitigation || '',
+      owner: item.owner || '',
+      acceptedBy: item.acceptedBy || '',
+      acceptedAt: item.acceptedAt?.toISOString() || '',
+      updatedAt: item.updatedAt.toISOString()
+    }));
+    return format === 'csv' ? this.toCsv(rows) : rows;
+  }
+
+  async exportCertifications(format: 'json' | 'csv' = 'json') {
+    const certifications = await this.prisma.recoveryCertification.findMany({
+      include: { repository: true },
+      orderBy: { updatedAt: 'desc' }
+    });
+    const rows = certifications.map((item: any) => ({
+      repositoryCode: item.repository.code,
+      repositoryName: item.repository.name,
+      certificationType: item.certificationType,
+      decision: item.decision,
+      reviewer: item.reviewer || '',
+      comments: item.comments || '',
+      decidedAt: item.decidedAt?.toISOString() || '',
+      updatedAt: item.updatedAt.toISOString()
+    }));
+    return format === 'csv' ? this.toCsv(rows) : rows;
+  }
+
+  async exportExecutiveApprovals(format: 'json' | 'csv' = 'json') {
+    const approvals = await this.prisma.executiveRecoveryApproval.findMany({
+      orderBy: { updatedAt: 'desc' }
+    });
+    const rows = approvals.map((item: any) => ({
+      releaseVersion: item.releaseVersion,
+      decision: item.decision,
+      approver: item.approver || '',
+      comments: item.comments || '',
+      decidedAt: item.decidedAt?.toISOString() || '',
+      updatedAt: item.updatedAt.toISOString()
+    }));
+    return format === 'csv' ? this.toCsv(rows) : rows;
+  }
+
+  async exportGoNoGoSummary(format: 'json' | 'csv' = 'json') {
+    const dashboard = await this.dashboard();
+    const row = {
+      generatedAt: dashboard.generatedAt,
+      repositoriesTotal: dashboard.summary.repositoriesTotal,
+      repositoriesCertified: dashboard.summary.repositoriesCertified,
+      avgAlignment: dashboard.summary.avgAlignment,
+      blockersTotal: dashboard.summary.blockersTotal,
+      highOpenBlockers: dashboard.summary.highOpenBlockers,
+      risksTotal: dashboard.summary.risksTotal,
+      evidenceSubmitted: dashboard.summary.evidenceSubmitted,
+      evidenceAccepted: dashboard.summary.evidenceAccepted,
+      executiveReadinessScore: dashboard.summary.executiveReadinessScore,
+      decision: dashboard.summary.decision
+    };
+    return format === 'csv' ? this.toCsv([row]) : row;
+  }
+
+  async exportCompleteBundle() {
+    const [
+      dashboard,
+      repositories,
+      batches,
+      evidence,
+      blockers,
+      risks,
+      certifications,
+      executiveApprovals,
+      goNoGoSummary
+    ] = await Promise.all([
+      this.dashboard(),
+      this.exportRepositories('json'),
+      this.exportBatches('json'),
+      this.exportEvidence('json'),
+      this.exportBlockers('json'),
+      this.exportRisks('json'),
+      this.exportCertifications('json'),
+      this.exportExecutiveApprovals('json'),
+      this.exportGoNoGoSummary('json')
+    ]);
+    return {
+      generatedAt: new Date().toISOString(),
+      title: 'YohPal Live Recovery Governance Evidence Bundle',
+      dashboard,
+      repositories,
+      batches,
+      evidence,
+      blockers,
+      risks,
+      certifications,
+      executiveApprovals,
+      goNoGoSummary
+    };
+  }
 }

@@ -75,6 +75,8 @@ export default function RootLayout({
               <Link href="/program-management/risks">Recovery Risks</Link>
               <Link href="/program-management/certification">Recovery Certification</Link>
               <Link href="/program-management/executive">Executive Approval</Link>
+              {/* ✅ Added: Batch 57 - Recovery Exports */}
+              <Link href="/program-management/exports">Recovery Exports</Link>
             </nav>
           </aside>
           <main className="main">{children}</main>
