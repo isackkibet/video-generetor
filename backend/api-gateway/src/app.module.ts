@@ -7,7 +7,8 @@ import { ProviderJobQueryService } from "../../shared/provider-job-query.service
 import { ScriptProviderQueryService } from "../../shared/script-provider-query.service";
 import { ObservabilityQueryService } from "../../shared/observability-query.service";
 import { EventAdminService } from "../../shared/event-admin.service";
-import { BackupEvidenceService } from "../../shared/backup-evidence.service"; // ✅ Added Batch 46
+import { BackupEvidenceService } from "../../shared/backup-evidence.service";
+import { BlueprintCertificationService } from "../../shared/blueprint-certification.service";
 import { PrismaService } from "../../shared/prisma.service";
 import { ApiGatewayKeyMiddleware } from "./api-key.middleware";
 import { RequestIdMiddleware } from "../../shared/request-id.middleware";
@@ -34,7 +35,8 @@ import { AdminJwtGuard } from "../../shared/admin-jwt.guard";
     ScriptProviderQueryService,
     ObservabilityQueryService,
     EventAdminService,
-    BackupEvidenceService, // ✅ Added Batch 46
+    BackupEvidenceService,
+    BlueprintCertificationService,
     PrismaService,
     RolesGuard,
     AdminJwtGuard,
