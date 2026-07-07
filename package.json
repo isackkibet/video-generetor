@@ -17,7 +17,8 @@
     "certification:enforce": "ts-node scripts/enforce-blueprint-alignment.ts",
     "certification:go-no-go": "npm run certification:blueprint && npm run certification:enforce",
     "evidence:executive-bundle": "ts-node scripts/generate-executive-evidence-bundle.ts",
-    "evidence:full": "npm run certification:blueprint && npm run certification:go-no-go && npm run ci:evidence && npm run evidence:executive-bundle"
+    "evidence:full": "npm run certification:blueprint && npm run certification:go-no-go && npm run ci:evidence && npm run evidence:executive-bundle",
+    "deployment:verify-lock": "ts-node scripts/verify-production-deployment-lock.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",

@@ -46,6 +46,7 @@ export const config = {
     "/release-gate/:path*",
     "/program-management/:path*",
     "/program-management/data/:path*",
+    "/program-management/deployment-lock/:path*",
     "/program-management/exports/:path*", // ✅ Added: Batch 57
     "/program-management/executive-bundle/:path*", // ✅ Added: Batch 58
     "/api/admin/:path*",

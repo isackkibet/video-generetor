@@ -574,3 +574,37 @@ model ExecutiveRecoveryApproval {
   @@index([releaseVersion])
   @@index([decision])
 }
+
+// ============================================================
+// Production Deployment Lock (Batch 60)
+// ============================================================
+
+enum DeploymentLockDecision {
+  GO
+  NO_GO
+}
+
+enum DeploymentLockStatus {
+  PENDING
+  AUTHORIZED
+  BLOCKED
+  DEPLOYED
+  REVOKED
+}
+
+model ProductionDeploymentLock {
+  id                    String                @id @default(uuid())
+  releaseVersion        String                @unique
+  evidenceBundleId      String                @unique
+  executiveDecision     DeploymentLockDecision
+  authorizationSigned   Boolean               @default(false)
+  authorizedBy          String?
+  authorizationReference String?
+  deploymentStatus      DeploymentLockStatus  @default(PENDING)
+  notes                 String?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  authorizedAt          DateTime?
+  deployedAt            DateTime?
+  revokedAt             DateTime?
+}

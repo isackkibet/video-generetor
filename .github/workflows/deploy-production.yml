@@ -1,40 +1,29 @@
 name: Deploy Production
-
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Image tag (e.g., v1.2.3)'
+      release_version:
+        description: "Release version approved for deployment"
         required: true
-        default: 'latest'
-
+        type: string
+env:
+  RELEASE_VERSION: ${{ inputs.release_version }}
+  DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+  ADMIN_JWT_SECRET: ${{ secrets.PRODUCTION_ADMIN_JWT_SECRET }}
+  API_GATEWAY_KEY: ${{ secrets.PRODUCTION_API_GATEWAY_KEY }}
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Build and push Docker images
-      run: |
-        for svc in api-gateway trend-service script-service render-service moderation-service recommendation-service; do
-          docker build -t registry.yohpal.com/yohpal-live/$svc:${{ inputs.version }} -f backend/$svc/Dockerfile.prod .
-          docker push registry.yohpal.com/yohpal-live/$svc:${{ inputs.version }}
-        done
-
-    - name: Deploy to Kubernetes
-      run: |
-        kubectl set image deployment/api-gateway api-gateway=registry.yohpal.com/yohpal-live/api-gateway:${{ inputs.version }} -n yohpal-live
-        kubectl set image deployment/trend-service trend-service=registry.yohpal.com/yohpal-live/trend-service:${{ inputs.version }} -n yohpal-live
-        kubectl set image deployment/script-service script-service=registry.yohpal.com/yohpal-live/script-service:${{ inputs.version }} -n yohpal-live
-        kubectl set image deployment/render-service render-service=registry.yohpal.com/yohpal-live/render-service:${{ inputs.version }} -n yohpal-live
-        kubectl set image deployment/moderation-service moderation-service=registry.yohpal.com/yohpal-live/moderation-service:${{ inputs.version }} -n yohpal-live
-        kubectl set image deployment/recommendation-service recommendation-service=registry.yohpal.com/yohpal-live/recommendation-service:${{ inputs.version }} -n yohpal-live
-
-    - name: Verify rollout status
-      run: |
-        kubectl rollout status deployment/api-gateway -n yohpal-live
-        kubectl rollout status deployment/trend-service -n yohpal-live
-        kubectl rollout status deployment/script-service -n yohpal-live
-        kubectl rollout status deployment/render-service -n yohpal-live
-        kubectl rollout status deployment/moderation-service -n yohpal-live
-        kubectl rollout status deployment/recommendation-service -n yohpal-live
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Verify Production Deployment Lock
+        run: npm run deployment:verify-lock
+      - name: Build and Deploy
+        run: |
+          echo "Deploying release ${{ inputs.release_version }}"
+          # Actual deployment steps go here

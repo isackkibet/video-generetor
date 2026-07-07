@@ -12,6 +12,8 @@ import { ReleaseGateService } from "../../shared/release-gate.service";
 import { BlueprintCertificationService } from "../../shared/blueprint-certification.service";
 import { ProgramManagementController } from "./program-management.controller";
 import { RecoveryGovernanceController } from "./recovery-governance.controller";
+import { ProductionDeploymentLockController } from "./production-deployment-lock.controller";
+import { ProductionDeploymentLockService } from "../../shared/production-deployment-lock.service";
 import { RecoveryGovernanceService } from "../../shared/recovery-governance.service";
 import { ProgramManagementService } from "../../shared/program-management.service";
 import { PrismaService } from "../../shared/prisma.service";
@@ -34,7 +36,7 @@ import { ExecutiveEvidenceService } from "../../shared/executive-evidence.servic
       },
     ]),
   ],
-  controllers: [GatewayController, HealthController, MetricsController, ProgramManagementController, RecoveryGovernanceController],
+  controllers: [GatewayController, HealthController, MetricsController, ProgramManagementController, RecoveryGovernanceController, ProductionDeploymentLockController],
   providers: [
     GatewayService,
     ProviderJobQueryService,
@@ -46,6 +48,7 @@ import { ExecutiveEvidenceService } from "../../shared/executive-evidence.servic
     BlueprintCertificationService,
     ProgramManagementService,
     RecoveryGovernanceService,
+    ProductionDeploymentLockService,
     ExecutiveEvidenceService,
     PrismaService,
     RolesGuard,

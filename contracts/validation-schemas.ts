@@ -272,3 +272,26 @@ export const executiveApprovalSchema = z.object({
 export const exportFormatQuerySchema = z.object({
   format: z.enum(['json', 'csv']).optional()
 });
+
+// ============================================================
+// Production Deployment Lock Schemas (Batch 60)
+// ============================================================
+
+export const createDeploymentLockSchema = z.object({
+  releaseVersion: z.string().min(2).max(80),
+  evidenceBundleId: z.string().min(5).max(160),
+  executiveDecision: z.enum(['GO', 'NO_GO']),
+  authorizationSigned: z.boolean(),
+  authorizedBy: z.string().min(2).max(120).optional(),
+  authorizationReference: z.string().min(2).max(200).optional(),
+  notes: z.string().optional(),
+});
+
+export const deploymentLockReleaseSchema = z.object({
+  releaseVersion: z.string().min(2).max(80),
+});
+
+export const markDeploymentDeployedSchema = z.object({
+  releaseVersion: z.string().min(2).max(80),
+  deploymentEvidenceRef: z.string().min(2).max(200).optional(),
+});
