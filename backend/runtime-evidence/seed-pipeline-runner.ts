@@ -1,18 +1,22 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../shared/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../shared/prisma.service";
 
 @Injectable()
 export class SeedPipelineRunner {
   constructor(private readonly prisma: PrismaService) {}
 
   async runSeedPipelineEvidence(count = 25) {
+    // Use a fixed ID for the creator so we can upsert by it
+    const creatorId = "yohpal_ai_studio";
+
     const creator = await this.prisma.creator.upsert({
-      where: { handle: 'yohpal_ai_studio' },
+      where: { id: creatorId },
       update: {},
       create: {
-        handle: 'yohpal_ai_studio',
-        displayName: 'YohPal AI Studio',
-        type: 'AI_STUDIO',
+        id: creatorId,
+        handle: "yohpal_ai_studio",
+        displayName: "YohPal AI Studio",
+        type: "AI_STUDIO",
       } as any,
     });
 
@@ -22,12 +26,12 @@ export class SeedPipelineRunner {
       const trend = await this.prisma.trend.create({
         data: {
           topic: `YohPal Seed Trend ${i}`,
-          category: i % 2 === 0 ? 'career' : 'entertainment',
+          category: i % 2 === 0 ? "career" : "entertainment",
           score: 80 + (i % 20),
           growthRate: 10 + i,
-          source: 'runtime-evidence',
-          region: 'Nairobi',
-          country: 'Kenya',
+          source: "runtime-evidence",
+          region: "Nairobi",
+          country: "Kenya",
         } as any,
       });
 
@@ -36,12 +40,12 @@ export class SeedPipelineRunner {
           trendId: trend.id,
           title: `Seed Video ${i}`,
           hook: `Here is a YohPal Live seed story ${i}`,
-          body: 'This is runtime-generated seed content used to prove the YohPal Live AI Content Factory pipeline.',
-          cta: 'Follow YohPal Live for more.',
-          language: 'en',
+          body: "This is runtime-generated seed content used to prove the YohPal Live AI Content Factory pipeline.",
+          cta: "Follow YohPal Live for more.",
+          language: "en",
           qualityScore: 0.86,
           factScore: 0.92,
-          providerName: 'runtime-evidence',
+          providerName: "runtime-evidence",
         } as any,
       });
 
@@ -52,10 +56,10 @@ export class SeedPipelineRunner {
           title: script.title,
           description: script.body,
           category: trend.category,
-          language: 'en',
-          region: 'Nairobi',
-          country: 'Kenya',
-          status: 'PUBLISHED',
+          language: "en",
+          region: "Nairobi",
+          country: "Kenya",
+          status: "PUBLISHED",
           videoUrl: `https://cdn.yohpal.com/runtime-evidence/video-${i}.mp4`,
           thumbnailUrl: `https://cdn.yohpal.com/runtime-evidence/thumb-${i}.jpg`,
           durationSeconds: 35 + i,
@@ -74,7 +78,11 @@ export class SeedPipelineRunner {
         } as any,
       });
 
-      results.push({ trendId: trend.id, scriptId: script.id, videoId: video.id });
+      results.push({
+        trendId: trend.id,
+        scriptId: script.id,
+        videoId: video.id,
+      });
     }
 
     return {
