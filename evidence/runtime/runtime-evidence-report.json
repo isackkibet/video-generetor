@@ -1,133 +1,133 @@
 {
-  "generatedAt": "2026-07-08T08:31:28.698Z",
+  "generatedAt": "2026-07-08T08:48:12.748Z",
   "seed": {
     "generatedVideos": 25,
     "publishedVideos": 25,
     "results": [
       {
-        "trendId": "3b5ceb96-36a5-4dcf-9cc2-be5cadc74837",
-        "scriptId": "64249411-6ec7-4e61-8d45-13128f487ede",
-        "videoId": "f6aefb8f-5c07-4e92-899d-0055b122a160"
+        "trendId": "8af9fb1a-a539-488e-9123-ea88d4da64b3",
+        "scriptId": "0b574618-6744-47a1-bc23-c930234023a6",
+        "videoId": "f2acea42-562b-4342-9f63-b1e5890d7e03"
       },
       {
-        "trendId": "e5026ce0-99fc-4752-892f-b4db85a2fb2a",
-        "scriptId": "7db3fdf8-71ef-4f29-9e8a-952d22908c56",
-        "videoId": "49b8806f-fe8d-4704-8a2e-581261971255"
+        "trendId": "2cbc357f-a6f9-4e43-b602-c82c0e3e5dee",
+        "scriptId": "204adf0e-b757-48ff-9f32-cc57e3ce8d10",
+        "videoId": "d8e406cd-fe4a-482a-ac2e-65797341a83a"
       },
       {
-        "trendId": "fe34d76b-615d-4b3f-ad67-102b18665cbe",
-        "scriptId": "e0cfff5b-e6f9-41b1-8215-b7ed5e7027a9",
-        "videoId": "a8ea9230-e3ed-4a0f-b96d-78fbd012c8b6"
+        "trendId": "4b3e512e-cada-4108-97a3-d65368e99a21",
+        "scriptId": "b8dd5501-0afa-498d-98c8-4600f296219d",
+        "videoId": "f98a5000-a9ac-4e55-8db5-a7793e0341f8"
       },
       {
-        "trendId": "77321333-9c10-491b-8f02-9279f4e44660",
-        "scriptId": "d01e6f65-b7d5-464f-93ab-5dcdf6f7a796",
-        "videoId": "c16bf928-b6e5-4087-9516-0bde74fe711a"
+        "trendId": "b81581aa-3f81-4c2b-a39e-72dc35c7e5ea",
+        "scriptId": "1d1dde0e-bc4e-429f-9608-8d12bbe7b9d2",
+        "videoId": "4bd01210-6437-4435-879d-ac79173f4ceb"
       },
       {
-        "trendId": "17fd4ca4-181b-415c-913a-577bb9080df3",
-        "scriptId": "e752290b-52a0-4482-9e61-4d3d787e9b0b",
-        "videoId": "d25ef9ff-d9cf-475b-b939-d9eed204c242"
+        "trendId": "8e2c58d8-a825-4718-9288-556c7a419cc0",
+        "scriptId": "47f2d1bb-c97f-4934-9766-5afe38245f47",
+        "videoId": "d371bc55-1d1e-41d6-9f6b-eb42c5993175"
       },
       {
-        "trendId": "2577813f-0327-4902-8c7f-502f91849c30",
-        "scriptId": "3b90f1bc-9fd1-432f-b983-d67b0f7d9a3e",
-        "videoId": "8f111602-0fb2-4cbb-85e5-fe4a709767ec"
+        "trendId": "210d2244-b89b-401e-9f49-27f26f9bf3b7",
+        "scriptId": "a12c0843-45a1-4a92-86f9-78e8d508b1cc",
+        "videoId": "101fe2a8-1f4d-410b-8f68-ec6f8d66cd7e"
       },
       {
-        "trendId": "e24050b8-4e9f-4c1a-bdbf-c62a6d3a6059",
-        "scriptId": "e0dc56e4-5363-4fe7-95a0-9f994ae72a21",
-        "videoId": "dcfd8c79-5454-42fc-b901-6905bb855eda"
+        "trendId": "3b076ea1-c8fc-49f1-af53-66e13579973b",
+        "scriptId": "a3e06b59-15df-4ba3-886f-d4cc159f2d98",
+        "videoId": "30523e4b-66d4-4fd2-9781-28b5aeeb739c"
       },
       {
-        "trendId": "ae9da020-2780-4c20-99dd-277bd68e31d9",
-        "scriptId": "862a55cd-88fe-41ac-83ac-59db38b3f9c0",
-        "videoId": "f96aa4fc-1498-4b2b-ac67-3ac82c2c80c8"
+        "trendId": "d90036e8-5b8c-4a6a-aa3d-340c091e6c22",
+        "scriptId": "47bab3b9-b0a0-4521-9af1-4417253c4b57",
+        "videoId": "c7f3ddb4-4a9e-45aa-ba58-a7c31ccc788c"
       },
       {
-        "trendId": "29acab3a-cf71-4fa2-bf5e-4fd4ee7741fe",
-        "scriptId": "b88607ad-a11c-4e9b-bdb0-3afd2ddd766e",
-        "videoId": "312dc5c6-912a-41c8-b62e-d51a5ea6f800"
+        "trendId": "d0cd01f3-11a8-471a-979e-e9234333fab4",
+        "scriptId": "b5f62c03-ec92-4d0c-8e53-868118303353",
+        "videoId": "365ff10d-83be-439b-837f-1a7c35c20779"
       },
       {
-        "trendId": "f5be2ee0-d50e-44e6-b31e-59e70b71a6b9",
-        "scriptId": "cca7fdb6-1651-4a53-ae0a-1f6fc423892b",
-        "videoId": "5185a2aa-9b2a-4246-9337-d11504301428"
+        "trendId": "56624eb9-0d0c-4e95-ae22-aafdec725d19",
+        "scriptId": "73bce985-b988-4179-8b5d-bc8a740fe055",
+        "videoId": "8094622c-53d9-4c41-a058-bfd6e623b535"
       },
       {
-        "trendId": "606ed180-146b-483a-bbad-4a1c8fcb8475",
-        "scriptId": "58c29f3a-403e-4286-992d-c1569678c307",
-        "videoId": "9aafddba-d3ba-439b-86ac-b05b73ea3e57"
+        "trendId": "2463e738-020e-4bec-9f5f-a756990fb33e",
+        "scriptId": "a0f21221-b268-4006-82f9-c26ce938f0dc",
+        "videoId": "7448ab1e-6883-4328-abc8-88fc146bce37"
       },
       {
-        "trendId": "355ce914-e06c-4ff1-8232-306b19740b6d",
-        "scriptId": "d08c9691-4e11-4db2-85db-c70ac112a9c9",
-        "videoId": "eeea486c-38cc-4ee7-9897-3dd039e9cf0b"
+        "trendId": "6de2eade-b608-4517-94a4-b7190b08c0c7",
+        "scriptId": "721b2bcd-7706-44fb-8a25-dd4d533b4467",
+        "videoId": "4cfbeacc-0fca-4465-82e0-b0d44ca97c77"
       },
       {
-        "trendId": "a9fe141f-070d-4cfc-a8d7-77d50e68ce1f",
-        "scriptId": "77f8e8ee-29d2-4905-83b4-23b19311347e",
-        "videoId": "4a812c04-c9ac-4fab-bd5d-cc16ca65c81b"
+        "trendId": "46743f6f-22e9-4147-8df6-2fb8d0334eb9",
+        "scriptId": "bfb40f03-b9e4-4136-b189-ca4401fe0b95",
+        "videoId": "02182961-ce03-4c24-a385-6a31fdb442d6"
       },
       {
-        "trendId": "b9b42058-5606-4d12-8d2e-56fa02fb5c25",
-        "scriptId": "ad98f1a3-6e29-453b-b940-8236a82a33ec",
-        "videoId": "85d73013-fa9e-4510-8ac8-acf50d293006"
+        "trendId": "95ee4cc1-f389-4f21-a17f-6691a27ee205",
+        "scriptId": "f019f1d2-7fb4-4cf5-ac88-31221c6bee33",
+        "videoId": "21963caa-698a-4f5c-aee2-165436a722ae"
       },
       {
-        "trendId": "360ba16e-013d-4a5c-97e8-1e08333bbdc1",
-        "scriptId": "446b7442-ddd7-4aa4-bb58-d01e54b4dbdd",
-        "videoId": "49d224c6-7653-4550-8c60-8d5b6f6f0e07"
+        "trendId": "b4adcc64-f89c-4811-9be7-abaae1bbcde7",
+        "scriptId": "f051a8fc-9656-44d4-94d8-09dce1e1b650",
+        "videoId": "b16cfecb-4f7c-4bb2-ab0c-d2ce2fb2435a"
       },
       {
-        "trendId": "35ea7224-b621-4b9d-a35e-6121109b27a7",
-        "scriptId": "2e6bed92-c6e4-4511-8454-1e01a12c894e",
-        "videoId": "6b50a1fa-e4a5-464e-a92d-d61eab026c2e"
+        "trendId": "29887cf8-7d7b-4018-b7eb-3c740ce20d0a",
+        "scriptId": "5a0026b8-d87e-4c73-aacc-ef7f15295470",
+        "videoId": "c25bef5b-dd71-4709-84fe-a19beced4225"
       },
       {
-        "trendId": "cf714b56-33c5-48ab-93e9-3c6561200da7",
-        "scriptId": "160a3246-1ce0-4456-8deb-ebf9b956a622",
-        "videoId": "b422cab6-6df9-4dbc-98bf-f68476f06785"
+        "trendId": "d02a2bdb-6ace-43f6-9209-044a4c8bcb59",
+        "scriptId": "5a1f150e-0413-40f6-a2fd-8178d50fd0de",
+        "videoId": "3a148894-cb51-48d6-886b-adca5fa13c87"
       },
       {
-        "trendId": "618e82aa-2968-4b3a-82ef-4ebe9bfe2e5b",
-        "scriptId": "b82468fc-071d-46e6-a84c-30fd158cd532",
-        "videoId": "f8075093-01ae-4612-a030-aba46d6c56ef"
+        "trendId": "42ef1ba5-72c2-41c4-b903-386dc51031da",
+        "scriptId": "f9768f65-223a-422a-99f0-13e84b2b9b73",
+        "videoId": "2d626536-2678-407e-85c8-c2f47d17c0b6"
       },
       {
-        "trendId": "38e18ac8-16d3-43b0-b63d-0363a4225db0",
-        "scriptId": "a568b76c-9e30-44d7-8d12-dcd64ce1af6d",
-        "videoId": "3ee27868-4bcc-45ce-8ef8-6ebebe6ddd92"
+        "trendId": "ed1dc00b-58f1-4bc2-a35b-481c57a530b2",
+        "scriptId": "081f9ced-f1fd-4394-95bf-37a20199fd63",
+        "videoId": "81c0c8f5-c0ba-48a3-a5ae-ada4815ce605"
       },
       {
-        "trendId": "1325dcbd-581b-4076-9960-d36b7c650ccc",
-        "scriptId": "ca559096-7f3d-4263-a73e-e2096344bc19",
-        "videoId": "a405ef2d-620b-41ad-833c-0e96490b8094"
+        "trendId": "dcb98e4d-2126-463c-bb32-8a8527dfab0f",
+        "scriptId": "806613bd-e8f5-4690-8bfa-909f27d6a867",
+        "videoId": "be621d93-93c0-4b41-820d-3249b7fd4264"
       },
       {
-        "trendId": "2ad4cd72-beea-458a-a57c-bca3e841c99c",
-        "scriptId": "910e233f-25de-4053-b06b-db755cd233dd",
-        "videoId": "9ffb3dba-6a11-4824-9506-29a0f21fe849"
+        "trendId": "6520bfd2-7649-40e3-aab1-36848d3c9394",
+        "scriptId": "5e9fcd82-447a-4815-a4cb-e7bd4e8412b4",
+        "videoId": "4ce82628-2884-452c-9201-624b12f67ade"
       },
       {
-        "trendId": "2e2f6815-4c88-4f5a-8ab2-1b6e3dfd5601",
-        "scriptId": "f07457b6-b50c-4e00-b5dc-439697b1fa14",
-        "videoId": "dede6c41-658a-4194-a722-5329f6dbe8e4"
+        "trendId": "00b05820-ae29-4093-a28d-830ed05c81f3",
+        "scriptId": "aef7986d-57b4-44e5-b650-bf85b0a3627b",
+        "videoId": "8ce8e793-c085-4a3d-af9a-7033820b6959"
       },
       {
-        "trendId": "ed5ebd8b-1e1b-403a-9542-be2580e39580",
-        "scriptId": "2aa3e1a5-2401-4359-92fc-8e8c0dbf22d8",
-        "videoId": "04bb109f-7a1a-4804-9d95-eee15c7cc095"
+        "trendId": "d0a089d7-ab44-44b0-a462-ba6f9ece67cf",
+        "scriptId": "0712c0d6-b695-45ad-8af1-1a98241c15aa",
+        "videoId": "68f9da55-55f3-49cc-a22d-9f8da3d9ce78"
       },
       {
-        "trendId": "981cc8fc-bac2-4d0e-8c18-75d72f77ca9d",
-        "scriptId": "c098a4eb-3afa-41df-80f2-37b3e50da450",
-        "videoId": "d0195606-3b4e-4b92-a283-8950742694c5"
+        "trendId": "5f86d059-0f87-4c53-bff9-7226bc6e98e5",
+        "scriptId": "0950df30-dcfc-47a8-8815-828144c71693",
+        "videoId": "137a2dd7-b0fa-4f75-92de-4f0ab398e9c0"
       },
       {
-        "trendId": "546f6902-2f0b-4c15-a179-c4b6d228535f",
-        "scriptId": "6db7ec71-7596-42d2-b0a1-2decb4649a09",
-        "videoId": "07a6fcc3-7bdd-4327-a290-8a50d8d2bebd"
+        "trendId": "a88cb9e9-02f6-4e07-a54e-2f90c0d31de6",
+        "scriptId": "ad969a7c-affa-41bc-840b-06b9aa5cbcd6",
+        "videoId": "f90be91c-0b37-4adb-847a-971189a384a0"
       }
     ]
   },
@@ -138,7 +138,7 @@
   "moderation": {
     "approvedModerationLogs": 5,
     "rejectedModerationLogs": 1,
-    "rejectedVideoId": "22d72501-8f38-4543-bae4-9f3929355bfe"
+    "rejectedVideoId": "34bd8ed6-29f6-4b33-bd46-8693caf6ffec"
   },
   "learning": {
     "userId": "runtime-demo-user",
@@ -147,17 +147,17 @@
     "userInterestProfilesCreated": 1
   },
   "report": {
-    "generatedAt": "2026-07-08T08:31:28.277Z",
+    "generatedAt": "2026-07-08T08:48:12.748Z",
     "status": "RUNTIME_EVIDENCE_READY",
     "metrics": {
-      "videos": 85,
-      "publishedVideos": 75,
-      "providerLogs": 20,
-      "adminAuditLogs": 2,
-      "moderationLogs": 17,
-      "feedEvents": 120,
+      "videos": 111,
+      "publishedVideos": 100,
+      "providerLogs": 30,
+      "adminAuditLogs": 3,
+      "moderationLogs": 23,
+      "feedEvents": 240,
       "userInterestProfiles": 1,
-      "videoScores": 75,
+      "videoScores": 100,
       "deploymentLocks": 0
     },
     "blockers": [],
