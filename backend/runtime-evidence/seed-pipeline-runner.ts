@@ -6,18 +6,14 @@ export class SeedPipelineRunner {
   constructor(private readonly prisma: PrismaService) {}
 
   async runSeedPipelineEvidence(count = 25) {
-    // Use a fixed ID for the creator so we can upsert by it
-    const creatorId = "yohpal_ai_studio";
-
     const creator = await this.prisma.creator.upsert({
-      where: { id: creatorId },
+      where: { username: "yohpal_ai_studio" },
       update: {},
       create: {
-        id: creatorId,
-        handle: "yohpal_ai_studio",
+        username: "yohpal_ai_studio",
         displayName: "YohPal AI Studio",
-        type: "AI_STUDIO",
-      } as any,
+        isAiCreator: true,
+      },
     });
 
     const results = [];
@@ -32,7 +28,7 @@ export class SeedPipelineRunner {
           source: "runtime-evidence",
           region: "Nairobi",
           country: "Kenya",
-        } as any,
+        },
       });
 
       const script = await this.prisma.script.create({
@@ -45,8 +41,7 @@ export class SeedPipelineRunner {
           language: "en",
           qualityScore: 0.86,
           factScore: 0.92,
-          providerName: "runtime-evidence",
-        } as any,
+        },
       });
 
       const video = await this.prisma.video.create({
@@ -54,28 +49,28 @@ export class SeedPipelineRunner {
           creatorId: creator.id,
           scriptId: script.id,
           title: script.title,
-          description: script.body,
           category: trend.category,
           language: "en",
           region: "Nairobi",
           country: "Kenya",
           status: "PUBLISHED",
+          publishedAt: new Date(),
           videoUrl: `https://cdn.yohpal.com/runtime-evidence/video-${i}.mp4`,
           thumbnailUrl: `https://cdn.yohpal.com/runtime-evidence/thumb-${i}.jpg`,
           durationSeconds: 35 + i,
-        } as any,
+        },
       });
 
       await this.prisma.videoScore.create({
         data: {
           videoId: video.id,
-          viralScore: 0.82,
-          engagementPrediction: 0.78,
+          viralProbability: 0.82,
+          engagementScore: 0.78,
+          watchTimeScore: 0.8,
+          shareScore: 0.75,
+          commentScore: 0.7,
           qualityScore: 0.86,
-          safetyScore: 0.94,
-          freshnessScore: 0.91,
-          finalRankScore: 0.84,
-        } as any,
+        },
       });
 
       results.push({

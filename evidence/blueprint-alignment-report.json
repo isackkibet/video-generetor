@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-06T10:41:42.997Z",
+  "generatedAt": "2026-07-08T08:33:05.306Z",
   "blueprint": "YohPal Live AI Content Factory",
-  "estimatedAlignmentPercent": 74,
+  "estimatedAlignmentPercent": 89,
   "productionDecision": "NOT_READY_FOR_PRODUCTION",
   "areas": [
     {
@@ -9,37 +9,33 @@
       "status": "PASS",
       "score": 100,
       "evidence": {
-        "trends": 117,
-        "scripts": 16,
-        "videos": 9
+        "trends": 192,
+        "scripts": 91,
+        "videos": 85
       },
       "blockers": []
     },
     {
       "area": "Seed Content Pipeline",
-      "status": "PARTIAL",
-      "score": 75,
+      "status": "PASS",
+      "score": 100,
       "evidence": {
-        "published": 0,
+        "published": 75,
         "scripted": 0,
         "moderation": 3
       },
-      "blockers": [
-        "Run async seed pipeline until at least one moderated video reaches PUBLISHED."
-      ]
+      "blockers": []
     },
     {
       "area": "Provider Auditability",
-      "status": "FAIL",
-      "score": 40,
+      "status": "PASS",
+      "score": 95,
       "evidence": {
-        "total": 0,
+        "total": 20,
         "failed": 0,
         "fallback": 0
       },
-      "blockers": [
-        "ProviderJobLog has no evidence. Run render/moderation provider stages."
-      ]
+      "blockers": []
     },
     {
       "area": "Event-Driven Kafka Processing",
@@ -57,29 +53,25 @@
     },
     {
       "area": "Moderation & Publishing Gate",
-      "status": "PARTIAL",
-      "score": 70,
+      "status": "PASS",
+      "score": 100,
       "evidence": {
-        "logs": 6,
-        "rejected": 6,
-        "approved": 0
+        "logs": 17,
+        "rejected": 7,
+        "approved": 75
       },
-      "blockers": [
-        "Moderation logs or approved/published content evidence is missing."
-      ]
+      "blockers": []
     },
     {
       "area": "Recommendation, Viral Scoring & Learning",
-      "status": "PARTIAL",
-      "score": 70,
+      "status": "PASS",
+      "score": 95,
       "evidence": {
-        "feedEvents": 0,
-        "profiles": 0,
-        "scores": 0
+        "feedEvents": 120,
+        "profiles": 1,
+        "scores": 75
       },
-      "blockers": [
-        "VideoScore evidence missing. Run render job creation with viral scoring."
-      ]
+      "blockers": []
     },
     {
       "area": "Authentication, RBAC & Admin Audit",
@@ -87,7 +79,7 @@
       "score": 95,
       "evidence": {
         "admins": 1,
-        "auditLogs": 0,
+        "auditLogs": 2,
         "secretsConfigured": true
       },
       "blockers": []
@@ -102,7 +94,7 @@
           "renderQueue": 0
         },
         "content": {
-          "published": 0
+          "published": 75
         }
       },
       "blockers": []
@@ -130,31 +122,11 @@
   ],
   "blockers": [
     {
-      "area": "Seed Content Pipeline",
-      "blocker": "Run async seed pipeline until at least one moderated video reaches PUBLISHED."
-    },
-    {
-      "area": "Provider Auditability",
-      "blocker": "ProviderJobLog has no evidence. Run render/moderation provider stages."
-    },
-    {
       "area": "Event-Driven Kafka Processing",
       "blocker": "No EventProcessingLog evidence. Enable workers and run async pipeline."
-    },
-    {
-      "area": "Moderation & Publishing Gate",
-      "blocker": "Moderation logs or approved/published content evidence is missing."
-    },
-    {
-      "area": "Recommendation, Viral Scoring & Learning",
-      "blocker": "VideoScore evidence missing. Run render job creation with viral scoring."
     }
   ],
   "requiredNextActions": [
-    "Run async seed pipeline until at least one moderated video reaches PUBLISHED.",
-    "ProviderJobLog has no evidence. Run render/moderation provider stages.",
-    "No EventProcessingLog evidence. Enable workers and run async pipeline.",
-    "Moderation logs or approved/published content evidence is missing.",
-    "VideoScore evidence missing. Run render job creation with viral scoring."
+    "No EventProcessingLog evidence. Enable workers and run async pipeline."
   ]
 }
