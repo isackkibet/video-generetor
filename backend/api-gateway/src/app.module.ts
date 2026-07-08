@@ -26,6 +26,7 @@ import { MetricsController } from "../../shared/metrics.controller";
 import { RolesGuard } from "../../shared/roles.guard";
 import { AdminJwtGuard } from "../../shared/admin-jwt.guard";
 import { ExecutiveEvidenceService } from "../../shared/executive-evidence.service";
+import { RuntimeEvidenceController } from "../../runtime-evidence/runtime-evidence.controller"; // <-- NEW IMPORT
 
 @Module({
   imports: [
@@ -36,7 +37,15 @@ import { ExecutiveEvidenceService } from "../../shared/executive-evidence.servic
       },
     ]),
   ],
-  controllers: [GatewayController, HealthController, MetricsController, ProgramManagementController, RecoveryGovernanceController, ProductionDeploymentLockController],
+  controllers: [
+    GatewayController,
+    HealthController,
+    MetricsController,
+    ProgramManagementController,
+    RecoveryGovernanceController,
+    ProductionDeploymentLockController,
+    RuntimeEvidenceController, // <-- NEW CONTROLLER
+  ],
   providers: [
     GatewayService,
     ProviderJobQueryService,
