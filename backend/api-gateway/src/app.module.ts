@@ -26,7 +26,10 @@ import { MetricsController } from "../../shared/metrics.controller";
 import { RolesGuard } from "../../shared/roles.guard";
 import { AdminJwtGuard } from "../../shared/admin-jwt.guard";
 import { ExecutiveEvidenceService } from "../../shared/executive-evidence.service";
-import { RuntimeEvidenceController } from "../../runtime-evidence/runtime-evidence.controller"; // <-- NEW IMPORT
+import { RuntimeEvidenceController } from "../../runtime-evidence/runtime-evidence.controller";
+// NEW IMPORTS FOR BATCH 63
+import { V4ClosureController } from "./v4-closure.controller";
+import { V4ClosureCertificationService } from "../../diagnostics/v4-closure-certification.service";
 
 @Module({
   imports: [
@@ -44,7 +47,8 @@ import { RuntimeEvidenceController } from "../../runtime-evidence/runtime-eviden
     ProgramManagementController,
     RecoveryGovernanceController,
     ProductionDeploymentLockController,
-    RuntimeEvidenceController, // <-- NEW CONTROLLER
+    RuntimeEvidenceController,
+    V4ClosureController, // <-- ADDED
   ],
   providers: [
     GatewayService,
@@ -59,6 +63,7 @@ import { RuntimeEvidenceController } from "../../runtime-evidence/runtime-eviden
     RecoveryGovernanceService,
     ProductionDeploymentLockService,
     ExecutiveEvidenceService,
+    V4ClosureCertificationService, // <-- ADDED
     PrismaService,
     RolesGuard,
     AdminJwtGuard,
