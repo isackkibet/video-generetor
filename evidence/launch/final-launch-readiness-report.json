@@ -1,0 +1,51 @@
+{
+  "generatedAt": "2026-07-09T10:31:56.834Z",
+  "diagnosticBaseline": {
+    "v5Alignment": 90,
+    "remainingTechnicalBlocker": "Event-Driven Kafka Processing"
+  },
+  "evidence": {
+    "publishedVideos": 175,
+    "providerLogs": 60,
+    "moderationLogs": 41,
+    "videoScores": 175,
+    "feedEvents": 547,
+    "eventProcessing": {
+      "total": 4,
+      "success": 4,
+      "failed": 0,
+      "deadLettered": 0,
+      "passed": true,
+      "blocker": null
+    },
+    "kafkaRuntime": {
+      "requiredTopics": [
+        "trend.discovered",
+        "script.created",
+        "video.rendered",
+        "video.published"
+      ],
+      "topicStatus": [
+        {
+          "topic": "trend.discovered",
+          "successCount": 1
+        },
+        {
+          "topic": "script.created",
+          "successCount": 1
+        },
+        {
+          "topic": "video.rendered",
+          "successCount": 1
+        },
+        {
+          "topic": "video.published",
+          "successCount": 1
+        }
+      ],
+      "passed": true
+    }
+  },
+  "launchReadinessDecision": "TECHNICALLY_READY_PENDING_EXECUTIVE_SPONSOR",
+  "remainingPrerequisite": "Executive Sponsor approval and production deployment lock release."
+}
