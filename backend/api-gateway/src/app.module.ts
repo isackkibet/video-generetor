@@ -30,6 +30,8 @@ import { RuntimeEvidenceController } from "../../runtime-evidence/runtime-eviden
 // NEW IMPORTS FOR BATCH 63
 import { V4ClosureController } from "./v4-closure.controller";
 import { V4ClosureCertificationService } from "../../diagnostics/v4-closure-certification.service";
+// NEW IMPORT FOR BATCH 64
+import { LaunchReadinessController } from "../../launch-validation/launch-readiness.controller";
 
 @Module({
   imports: [
@@ -48,7 +50,8 @@ import { V4ClosureCertificationService } from "../../diagnostics/v4-closure-cert
     RecoveryGovernanceController,
     ProductionDeploymentLockController,
     RuntimeEvidenceController,
-    V4ClosureController, // <-- ADDED
+    V4ClosureController,
+    LaunchReadinessController, // <-- ADDED FOR BATCH 64
   ],
   providers: [
     GatewayService,
@@ -63,7 +66,7 @@ import { V4ClosureCertificationService } from "../../diagnostics/v4-closure-cert
     RecoveryGovernanceService,
     ProductionDeploymentLockService,
     ExecutiveEvidenceService,
-    V4ClosureCertificationService, // <-- ADDED
+    V4ClosureCertificationService,
     PrismaService,
     RolesGuard,
     AdminJwtGuard,

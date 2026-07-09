@@ -20,7 +20,9 @@
     "evidence:full": "npm run certification:blueprint && npm run certification:go-no-go && npm run ci:evidence && npm run evidence:executive-bundle",
     "deployment:verify-lock": "ts-node scripts/verify-production-deployment-lock.ts",
     "evidence:runtime": "ts-node scripts/generate-runtime-evidence.ts",
-    "diagnostic:v4-closure": "ts-node scripts/generate-v4-closure-certification.ts"
+    "diagnostic:v4-closure": "ts-node scripts/generate-v4-closure-certification.ts",
+    "launch:verify-events": "ts-node scripts/verify-event-processing.ts",
+    "launch:verify-readiness": "ts-node scripts/verify-launch-readiness.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",
