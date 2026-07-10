@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-07-10T08:26:16.551Z",
+  "requiredScreenshots": [
+    "Program Management Dashboard",
+    "Recovery Data",
+    "Recovery Evidence",
+    "Recovery Blockers",
+    "Recovery Risks",
+    "Recovery Certification",
+    "Executive Approval",
+    "Blueprint Certification",
+    "Release Gate",
+    "Metrics Evidence",
+    "Backup Evidence",
+    "Event Processing Dashboard"
+  ],
+  "storageFolder": "screenshots/",
+  "instruction": "Place screenshots in the screenshots folder using evidence naming standard."
+}

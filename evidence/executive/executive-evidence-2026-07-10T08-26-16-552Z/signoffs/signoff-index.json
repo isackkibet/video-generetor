@@ -1,0 +1,20 @@
+{
+  "generatedAt": "2026-07-10T08:26:16.551Z",
+  "requiredSignoffs": [
+    "API Gateway Repository Lead",
+    "Trend Service Repository Lead",
+    "Script Service Repository Lead",
+    "Render Service Repository Lead",
+    "Moderation Service Repository Lead",
+    "Recommendation Service Repository Lead",
+    "Admin Web Repository Lead",
+    "Mobile Flutter Repository Lead",
+    "DevOps Lead",
+    "Engineering Lead",
+    "Security Lead",
+    "Operations Lead",
+    "Executive Sponsor"
+  ],
+  "storageFolder": "signoffs",
+  "instruction": "Place signed sign-off documents in the signoffs folder before executive review."
+}

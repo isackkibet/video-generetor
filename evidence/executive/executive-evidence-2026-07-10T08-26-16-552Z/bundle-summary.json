@@ -1,0 +1,77 @@
+{
+  "bundleId": "executive-evidence-2026-07-10T08-26-16-552Z",
+  "generatedAt": "2026-07-10T08:26:16.551Z",
+  "title": "YohPal Live AI Content Factory Executive Evidence Bundle",
+  "purpose": "Consolidated recovery, certification, GO/NO-GO, CI, sign-off, and evidence package for executive production approval.",
+  "minimumProductionRequirements": {
+    "blueprintAlignment": ">= 90%",
+    "blockers": "0 HIGH or CRITICAL unresolved blockers",
+    "repositories": "All repositories certified",
+    "evidence": "All required evidence submitted and accepted",
+    "executiveApproval": "Required"
+  },
+  "folders": {
+    "root": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\executive\\executive-evidence-2026-07-10T08-26-16-552Z",
+    "certification": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\executive\\executive-evidence-2026-07-10T08-26-16-552Z\\certification",
+    "recovery": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\executive\\executive-evidence-2026-07-10T08-26-16-552Z\\recovery-governance",
+    "ci": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\executive\\executive-evidence-2026-07-10T08-26-16-552Z\\ci",
+    "screenshots": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\executive\\executive-evidence-2026-07-10T08-26-16-552Z\\screenshots",
+    "signoffs": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\executive\\executive-evidence-2026-07-10T08-26-16-552Z\\signoffs",
+    "goNoGo": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\executive\\executive-evidence-2026-07-10T08-26-16-552Z\\go-no-go",
+    "docs": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\executive\\executive-evidence-2026-07-10T08-26-16-552Z\\docs"
+  },
+  "manifest": [
+    {
+      "name": "Blueprint Alignment JSON",
+      "sourcePath": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\blueprint-alignment-report.json",
+      "status": "INCLUDED",
+      "copiedTo": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\executive\\executive-evidence-2026-07-10T08-26-16-552Z\\certification\\blueprint-alignment-report.json"
+    },
+    {
+      "name": "Blueprint Alignment Markdown",
+      "sourcePath": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\blueprint-alignment-report.md",
+      "status": "INCLUDED",
+      "copiedTo": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\executive\\executive-evidence-2026-07-10T08-26-16-552Z\\certification\\blueprint-alignment-report.md"
+    },
+    {
+      "name": "CI Evidence JSON",
+      "sourcePath": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\ci-evidence.json",
+      "status": "INCLUDED",
+      "copiedTo": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\executive\\executive-evidence-2026-07-10T08-26-16-552Z\\ci\\ci-evidence.json"
+    },
+    {
+      "name": "GO NO-GO Decision JSON",
+      "sourcePath": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\go-no-go-decision.json",
+      "status": "MISSING"
+    },
+    {
+      "name": "Developer Recovery Handover Pack",
+      "sourcePath": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\docs\\recovery\\FINAL_DEVELOPER_RECOVERY_HANDOVER_PACK.md",
+      "status": "INCLUDED",
+      "copiedTo": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\executive\\executive-evidence-2026-07-10T08-26-16-552Z\\docs\\FINAL_DEVELOPER_RECOVERY_HANDOVER_PACK.md"
+    },
+    {
+      "name": "Repository Recovery Tracker",
+      "sourcePath": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\docs\\recovery\\REPOSITORY_RECOVERY_EXECUTION_TRACKER.md",
+      "status": "INCLUDED",
+      "copiedTo": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\executive\\executive-evidence-2026-07-10T08-26-16-552Z\\docs\\REPOSITORY_RECOVERY_EXECUTION_TRACKER.md"
+    },
+    {
+      "name": "Developer Recovery Assignment Memo",
+      "sourcePath": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\docs\\recovery\\DEVELOPER_RECOVERY_ASSIGNMENT_MEMO.md",
+      "status": "INCLUDED",
+      "copiedTo": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\executive\\executive-evidence-2026-07-10T08-26-16-552Z\\docs\\DEVELOPER_RECOVERY_ASSIGNMENT_MEMO.md"
+    },
+    {
+      "name": "Evidence Naming Standard",
+      "sourcePath": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\docs\\recovery\\EVIDENCE_NAMING_STANDARD.md",
+      "status": "MISSING"
+    },
+    {
+      "name": "Recovery Submission Structure",
+      "sourcePath": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\docs\\recovery\\RECOVERY_SUBMISSION_STRUCTURE.md",
+      "status": "INCLUDED",
+      "copiedTo": "C:\\Users\\danca\\Desktop\\yohpal-live-ai-content-factory\\evidence\\executive\\executive-evidence-2026-07-10T08-26-16-552Z\\docs\\RECOVERY_SUBMISSION_STRUCTURE.md"
+    }
+  ]
+}
