@@ -9,7 +9,7 @@ import { AdminRole, ROLES_KEY } from "./roles.decorator";
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  private readonly reflector = new Reflector();
+  constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
     const roles = this.reflector.getAllAndOverride<AdminRole[]>(ROLES_KEY, [
