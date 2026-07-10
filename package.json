@@ -22,7 +22,9 @@
     "evidence:runtime": "ts-node scripts/generate-runtime-evidence.ts",
     "diagnostic:v4-closure": "ts-node scripts/generate-v4-closure-certification.ts",
     "launch:verify-events": "ts-node scripts/verify-event-processing.ts",
-    "launch:verify-readiness": "ts-node scripts/verify-launch-readiness.ts"
+    "launch:verify-readiness": "ts-node scripts/verify-launch-readiness.ts",
+    "finalize:ga": "ts-node scripts/finalize-general-availability.ts",
+    "archive:artifacts": "ts-node scripts/archive-certification-artifacts.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",
