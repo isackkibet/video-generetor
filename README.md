@@ -1,10 +1,12 @@
-# YohPal Live AI Content Factory
+# Video Generator
 
-YohPal Live AI Content Factory is the seed video generation engine for **YohPal Live** — a short-form video platform. It solves the cold-start problem by generating, scoring, moderating, publishing, and ranking AI-assisted short videos before the platform has enough human creators.
+An AI-powered short-form video generation platform that creates, scores, moderates, publishes, and ranks AI-assisted short videos.
 
 ---
 
-## System Flow
+## How It Works
+
+The platform follows this pipeline:
 
 ```
 ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
@@ -19,15 +21,17 @@ YohPal Live AI Content Factory is the seed video generation engine for **YohPal 
 └──────────────┘    └──────────────┘    └──────────────┘
 ```
 
-1. **Trend Discovery** — Trending topics are identified and seeded.
-2. **AI Script Generation** — Scripts are generated using LLM providers.
-3. **Viral Score Calculation** — Each script is scored for viral potential.
-4. **Video Render Job** — Render jobs are created for approved scripts.
-5. **Avatar/TTS/Video Rendering** — Videos are rendered with AI avatars and TTS.
-6. **Moderation** — Content passes through safety checks before publishing.
-7. **Publishing** — Approved videos are published to the platform.
-8. **Recommendation Engine** — Videos are ranked into user feeds.
-9. **Feed Events** — User interactions improve future recommendations.
+### Pipeline Steps
+
+1. **Trend Discovery** — Identifies trending topics and seeds them into the system
+2. **AI Script Generation** — Uses LLM providers to generate scripts from trending topics
+3. **Viral Score Calculation** — Scores each script for viral potential
+4. **Video Render Job** — Creates render jobs for scripts that pass scoring
+5. **Avatar/TTS/Video Rendering** — Renders videos with AI avatars and text-to-speech
+6. **Moderation** — Runs content through safety checks before publishing
+7. **Publishing** — Approved videos are published to the platform
+8. **Recommendation Engine** — Ranks videos into personalized user feeds
+9. **Feed Events** — User interactions improve future recommendations
 
 ---
 
@@ -104,8 +108,8 @@ docker compose -f infra/docker-compose.yml up --build
 cp .env.example .env
 
 # Update .env with your local PostgreSQL and Redis URLs
-# DATABASE_URL="postgresql://postgres:postgres@localhost:5432/yohpal_live_ai"
-# REDIS_URL="redis://localhost:60379"
+# DATABASE_URL="postgresql://postgres:postgres@localhost:5432/video_generator"
+# REDIS_URL="redis://localhost:6379"
 
 # Install dependencies
 npm install
@@ -133,8 +137,8 @@ Key environment variables (see `.env.example` for full list):
 
 | Variable | Description | Default |
 |---|---|---|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:postgres@localhost:5432/yohpal_live_ai` |
-| `REDIS_URL` | Redis connection string | `redis://localhost:60379` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:postgres@localhost:5432/video_generator` |
+| `REDIS_URL` | Redis connection string | `redis://localhost:6379` |
 | `API_GATEWAY_KEY` | API gateway authentication key | `change-this-api-key` |
 | `ADMIN_JWT_SECRET` | JWT secret for admin auth | `change-this-secret` |
 | `LLM_PROVIDER` | AI script generation provider | `mock` |
@@ -204,7 +208,7 @@ Nginx configuration is available in `infra/nginx/`.
 ## Project Structure
 
 ```
-yohpal-live-ai-content-factory/
+video-generator/
 ├── ai/                    # AI provider integrations
 ├── apps/
 │   ├── admin_web/         # Next.js admin dashboard
@@ -243,7 +247,7 @@ The API Gateway proxies requests to individual services:
 
 ## License
 
-Private — YohPal Live
+Private
 
 ---
 
